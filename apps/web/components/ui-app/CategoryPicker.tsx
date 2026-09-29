@@ -41,7 +41,7 @@ export function CategoryPicker({ categories, startingSlug, error, onStart }: Cat
         <CardDescription>Ten questions, 20 seconds each.</CardDescription>
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-3">
+      <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {error ? <ErrorNotice error={error} /> : null}
 
         {categories.length === 0 ? (
@@ -57,11 +57,13 @@ export function CategoryPicker({ categories, startingSlug, error, onStart }: Cat
                 startingSlug !== null ||
                 (category.slug !== 'memory' && category.liveQuestionCount < 10)
               }
-              className="h-auto justify-between py-3"
+              className="category-choice h-auto justify-between"
               onClick={() => onStart(category.slug)}
             >
-              <span>{category.name}</span>
-              <span className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="font-display text-lg font-semibold">
+                {category.name} <span aria-hidden="true">↗</span>
+              </span>
+              <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 {category.tier && category.tier !== 'NONE' ? (
                   <span
                     data-testid={`tier-${category.slug}`}

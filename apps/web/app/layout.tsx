@@ -10,13 +10,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="light">
       <body className="min-h-dvh">
         <AppNavigation />
         <BreakReminder />
         {children}
-        <footer className="border-t p-6 text-center text-sm text-muted-foreground">
-          A little practice. A little progress. Every day.
+        <footer className="border-t bg-secondary/40 px-6 py-8 text-center text-sm text-muted-foreground">
+          LearnArena · Build your skills. Find your people. Enjoy the progress.
         </footer>
       </body>
     </html>

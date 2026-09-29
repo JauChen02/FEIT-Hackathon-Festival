@@ -1,3 +1,4 @@
+import { SignOutButton } from '@/components/ui-app/SignOutButton';
 import { PrivacySettings } from './PrivacySettings';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -19,6 +20,13 @@ export default async function SettingsPage() {
       <h1 className="text-2xl font-semibold">Settings</h1>
       <SettingsClient displayName={profile.displayName} timezone={profile.timezone} />
       <PrivacySettings />
+      <section className="space-y-3 rounded-xl border bg-card p-6">
+        <h2 className="text-xl font-semibold">Account</h2>
+        <p className="text-sm text-muted-foreground">
+          Sign out of this browser. Your progress stays saved.
+        </p>
+        <SignOutButton />
+      </section>
     </main>
   );
 }

@@ -8,7 +8,7 @@ const labels = {
 };
 export function StreakCard({ streak }: { streak: StreakState }) {
   return (
-    <Card data-testid="streak-card">
+    <Card data-testid="streak-card" className="border-orange/20 bg-accent/40">
       <CardHeader>
         <CardTitle>🔥 {streak.currentLen} day streak</CardTitle>
       </CardHeader>

@@ -53,13 +53,38 @@ export default function SignInPage() {
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center p-(--spacing-gutter)">
-      <SignInForm
-        onSendMagicLink={sendMagicLink}
-        onGoogleSignIn={signInWithGoogle}
-        status={status}
-        error={error}
-      />
+    <main className="auth-layout">
+      <section className="space-y-7">
+        <span className="feature-chip">
+          <span className="size-2 rounded-full bg-primary" />
+          Your next learning adventure
+        </span>
+        <h1 className="font-display text-5xl leading-[1.08] font-bold tracking-tight md:text-6xl">
+          <span className="gradient-text">Small challenges.</span>
+          <br />
+          Extraordinary progress.
+        </h1>
+        <p className="max-w-lg text-lg leading-relaxed text-muted-foreground">
+          Turn a little curiosity into a daily habit. Sharpen your skills, challenge your friends,
+          and discover what you’re capable of.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <span className="feature-chip">✦ Personal skill coaching</span>
+          <span className="feature-chip">↯ Multiplayer battles</span>
+          <span className="feature-chip">◈ Streaks &amp; rewards</span>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Quizzes · Speed math · Memory · Interactive stories
+        </p>
+      </section>
+      <div className="auth-form-wrap">
+        <SignInForm
+          onSendMagicLink={sendMagicLink}
+          onGoogleSignIn={signInWithGoogle}
+          status={status}
+          error={error}
+        />
+      </div>
     </main>
   );
 }

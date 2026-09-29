@@ -27,12 +27,12 @@ export function SignInForm({ onSendMagicLink, onGoogleSignIn, status, error }: S
 
   return (
     <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>Sign in to LearnArena</CardTitle>
+      <CardHeader className="px-8 pt-8 pb-6">
+        <CardTitle className="text-2xl">Sign in to LearnArena</CardTitle>
         <CardDescription>We will email you a link. No password to remember.</CardDescription>
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="flex flex-col gap-5 px-8 pb-8">
         {error ? <ErrorNotice error={error} /> : null}
 
         {status === 'sent' ? (

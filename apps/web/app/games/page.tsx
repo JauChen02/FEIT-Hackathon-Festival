@@ -45,9 +45,9 @@ export default function GamesPage() {
   }
   return (
     <main className="mx-auto max-w-(--container-content) space-y-6 p-(--spacing-gutter)">
-      <div>
-        <p className="text-sm tracking-widest text-primary uppercase">Find your flow</p>
-        <h1 className="text-3xl font-bold">More ways to learn</h1>
+      <div className="hero-panel">
+        <p className="eyebrow">Find your flow</p>
+        <h1 className="mt-3 text-4xl font-bold md:text-5xl">More ways to learn</h1>
         <p className="mt-2 text-muted-foreground">
           Quick thinking, better recall, and choices that matter.
         </p>
@@ -60,8 +60,18 @@ export default function GamesPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {activities.map((activity) => (
-            <Card key={activity.id}>
+            <Card key={activity.id} className="overflow-hidden">
               <CardHeader>
+                <span
+                  aria-hidden="true"
+                  className="mb-3 flex size-12 items-center justify-center rounded-lg bg-secondary text-2xl text-primary"
+                >
+                  {activity.kind === 'memory_match'
+                    ? '◈'
+                    : activity.kind === 'speed_math'
+                      ? '↯'
+                      : '✦'}
+                </span>
                 <p className="text-xs tracking-widest text-muted-foreground uppercase">
                   {activity.kind.replaceAll('_', ' ')}
                 </p>
