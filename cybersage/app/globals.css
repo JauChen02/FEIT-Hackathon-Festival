@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+:root {
+  /* Untapped 官方标准明亮蓝调 */
+  --ut-brand-blue: #0066B3;
+  --ut-sky: #38BDF8;
+  --ut-light: #F0F9FF;
+  --text-primary: #0F172A;
+  --text-muted: #64748B;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  /* 换成官网同款饱满纯蓝，不再发黑发暗 */
+  background-color: #0066B3;
+  color: #FFFFFF;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* 删掉之前灰暗的点阵，换成非常微弱纯净的白色小星点效果（对齐官网 Hero） */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.12) 1.2px, transparent 1.2px);
+  background-size: 36px 36px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#__next, main { position: relative; z-index: 1; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 4px; }
+
+/* 场景代码框（保持清晰高对比度） */
+.scenario-context strong { color: #38BDF8; font-weight: 600; }
+.scenario-context code {
+  display: block;
+  background: #0F172A;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #38BDF8;
+  white-space: pre-wrap;
+  margin: 10px 0;
+}
+
+/* 动效支持 */
+@keyframes pulse-answer {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+.answer-pulse { animation: pulse-answer 0.3s ease; }
+
+@keyframes xp-flash {
+  0% { opacity: 0; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-16px); }
+  100% { opacity: 0; transform: translateY(-32px); }
+}
+.xp-float { animation: xp-flash 1s ease forwards; }
+
+@keyframes flame {
+  0%, 100% { transform: scaleY(1) rotate(-2deg); }
+  50% { transform: scaleY(1.1) rotate(2deg); }
+}
+.streak-flame { animation: flame 0.8s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .answer-pulse,
+  .xp-float,
+  .streak-flame { animation: none; }
+}
