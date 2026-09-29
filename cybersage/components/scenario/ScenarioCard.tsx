@@ -1,20 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { Scenario } from "@/types";
 import { clsx } from "clsx";
-import { Shield, Zap, AlertTriangle, Lock, CheckCircle } from "lucide-react";
+import { CheckCircle2, Circle, Lock, Bookmark } from "lucide-react";
 import Link from "next/link";
 
 const DIFFICULTY_STYLE = {
-  beginner:     { pill: "text-emerald-300 border-emerald-500/30 bg-emerald-500/10", dot: "bg-emerald-400" },
-  intermediate: { pill: "text-amber-300 border-amber-500/30 bg-amber-500/10",       dot: "bg-amber-400" },
-  advanced:     { pill: "text-red-300 border-red-500/30 bg-red-500/10",             dot: "bg-red-400" },
-};
-
-const CATEGORY_ICON: Record<string, React.ElementType> = {
-  "Social Engineering": AlertTriangle,
-  "Access Control": Shield,
-  "Incident Response": Zap,
+  beginner:     { text: "text-emerald-600", dot: "bg-emerald-500" },
+  intermediate: { text: "text-amber-600",   dot: "bg-amber-500" },
+  advanced:     { text: "text-red-600",     dot: "bg-red-500" },
 };
 
 interface ScenarioCardProps {
@@ -24,22 +19,30 @@ interface ScenarioCardProps {
   index: number;
 }
 
-export default function ScenarioCard({ scenario, completed = false, locked = false, index }: ScenarioCardProps) {
-  const Icon = CATEGORY_ICON[scenario.category] ?? Shield;
-  const diff = DIFFICULTY_STYLE[scenario.difficulty];
-  const maxXP = Math.max(...scenario.choices.map(c => c.xpGain));
+export default function ScenarioCard({
+  scenario,
+  completed = false,
+  locked = false,
+  index,
+}: ScenarioCardProps) {
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const diff = DIFFICULTY_STYLE[scenario.difficulty] ?? DIFFICULTY_STYLE.beginner;
+  const maxXP = Math.max(...scenario.choices.map((c) => c.xpGain));
+
+  const handleBookmarkToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsBookmarked((prev) => !prev);
+  };
 
   if (locked) {
     return (
-      <div className="relative rounded-2xl border border-[#1A4A8A]/20 bg-[#0B1E3D]/40 p-6 opacity-50 cursor-not-allowed">
-        <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-[#071428]/60 backdrop-blur-[1px]">
-          <Lock size={20} className="text-blue-300/40" />
-        </div>
+      <div className="relative flex flex-col justify-between bg-slate-50 border border-slate-200 rounded-none p-6 opacity-60 cursor-not-allowed">
         <div className="space-y-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1A4A8A]/20">
-            <Icon size={18} className="text-blue-300/40" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-none bg-slate-200">
+            <Lock size={15} className="text-slate-400" />
           </div>
-          <p className="font-semibold text-slate-500">{scenario.title}</p>
+          <p className="font-bold text-slate-400">{scenario.title}</p>
         </div>
       </div>
     );
@@ -49,35 +52,70 @@ export default function ScenarioCard({ scenario, completed = false, locked = fal
     <Link
       href={`/scenario/${scenario.id}`}
       className={clsx(
-        "group relative block rounded-2xl border p-6 transition-all duration-300",
-        completed
-          ? "border-[#00B4D8]/40 bg-gradient-to-br from-[#0077B6]/15 to-[#0B1E3D]/60 hover:border-[#4FC3F7]/60"
-          : "border-[#1A4A8A]/40 bg-[#0B1E3D]/50 hover:border-[#2D7DD2]/60 hover:bg-[#0F2548]/70"
+        "group relative flex flex-col justify-between bg-white border rounded-none p-6 transition-all duration-200 hover:-translate-y-1 block shadow-sm hover:shadow-lg",
+        completed ? "border-slate-300" : "border-slate-200 hover:border-[#0066B3]"
       )}
-      style={{ boxShadow: completed ? "0 0 20px rgba(0,180,216,0.08)" : undefined }}
     >
-      {/* Mission number */}
-      <div className="absolute right-5 top-5 flex items-center gap-2">
-        {completed && <CheckCircle size={16} className="text-[#4FC3F7]" />}
-        <span className="text-xs font-mono text-blue-300/30">#{String(index + 1).padStart(2, "0")}</span>
+      {/* 右上角：完成状态图标、编号、收藏 */}
+      <div className="absolute right-5 top-5 flex items-center gap-2.5 z-10">
+        {/* 做完显示亮绿对勾，没做显示浅灰空心圆 */}
+        {completed ? (
+          <span className="flex items-center text-emerald-500" title="Completed">
+            <CheckCircle2 size={16} />
+          </span>
+        ) : (
+          <span className="flex items-center text-slate-300" title="Not completed">
+            <Circle size={15} />
+          </span>
+        )}
+
+        <span className="text-xs font-mono font-bold text-slate-400">
+          #{String(index + 1).padStart(2, "0")}
+        </span>
+
+        {/* 收藏按钮 */}
+        <button
+          type="button"
+          onClick={handleBookmarkToggle}
+          aria-label="Bookmark"
+          className="p-1 rounded text-slate-400 hover:text-amber-500 transition-colors"
+        >
+          <Bookmark
+            size={16}
+            className={clsx(
+              "transition-all",
+              isBookmarked
+                ? "fill-amber-400 text-amber-500 scale-110"
+                : "text-slate-400 hover:text-slate-600"
+            )}
+          />
+        </button>
       </div>
 
-      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-[#1A4A8A]/40 bg-[#1A4A8A]/20 transition-colors group-hover:border-[#2D7DD2]/60 group-hover:bg-[#1A4A8A]/30">
-        <Icon size={20} className={completed ? "text-[#4FC3F7]" : "text-blue-300"} />
+      {/* 文字主体 */}
+      <div>
+        <p className="mb-1 text-xs font-bold uppercase tracking-wider text-[#0066B3]">
+          {scenario.category}
+        </p>
+
+        <h3 className="mb-2 text-lg font-bold text-slate-900 group-hover:text-[#0066B3] transition-colors pr-16 leading-snug">
+          {scenario.title}
+        </h3>
+
+        <p className="mb-6 text-sm text-slate-600 leading-relaxed line-clamp-3">
+          {scenario.description}
+        </p>
       </div>
 
-      <p className="mb-0.5 text-xs text-blue-300/50">{scenario.category}</p>
-      <h3 className="mb-2 font-semibold text-blue-50 group-hover:text-white transition-colors">
-        {scenario.title}
-      </h3>
-      <p className="mb-5 text-sm text-blue-200/50 leading-relaxed">{scenario.description}</p>
-
-      <div className="flex items-center justify-between">
-        <span className={clsx("rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize", diff.pill)}>
+      {/* 底部难度与奖励 */}
+      <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-auto">
+        <span className={clsx("inline-flex items-center text-xs font-bold capitalize", diff.text)}>
           <span className={clsx("mr-1.5 inline-block h-1.5 w-1.5 rounded-full", diff.dot)} />
           {scenario.difficulty}
         </span>
-        <span className="text-xs font-medium text-[#4FC3F7]/70">+{maxXP} XP</span>
+        <span className="text-xs font-extrabold text-[#0066B3]">
+          +{maxXP} XP
+        </span>
       </div>
     </Link>
   );
