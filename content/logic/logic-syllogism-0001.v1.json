@@ -1,0 +1,37 @@
+{
+  "externalId": "logic-syllogism-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "syllogisms",
+  "type": "MCQ",
+  "difficulty": 2,
+  "prompt": "All cats are mammals. All mammals are animals. What follows?",
+  "options": [
+    {
+      "id": "a",
+      "text": "All animals are cats"
+    },
+    {
+      "id": "b",
+      "text": "All cats are animals"
+    },
+    {
+      "id": "c",
+      "text": "Some mammals are not animals"
+    },
+    {
+      "id": "d",
+      "text": "No conclusion follows"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "The two premises chain together: cats are inside mammals, mammals are inside animals, so cats are inside animals. The reverse, 'all animals are cats', does not follow from either premise.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

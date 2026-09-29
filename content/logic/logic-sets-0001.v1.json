@@ -1,0 +1,19 @@
+{
+  "externalId": "logic-sets-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "sets",
+  "type": "NUMERIC",
+  "difficulty": 2,
+  "prompt": "In a class of 30, 18 study French and 15 study German. Every student studies at least one. How many study both?",
+  "answer": {
+    "value": "3"
+  },
+  "explanation": "By inclusion-exclusion, 18 + 15 = 33 counts the students who take both twice. 33 - 30 = 3 study both.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

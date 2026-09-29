@@ -1,0 +1,37 @@
+{
+  "externalId": "logic-montyhall-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "probability",
+  "type": "MCQ",
+  "difficulty": 5,
+  "prompt": "In the Monty Hall problem, you pick one of three doors, the host opens a different door revealing a goat, and offers a switch. What should you do?",
+  "options": [
+    {
+      "id": "a",
+      "text": "Stay, the odds are equal"
+    },
+    {
+      "id": "b",
+      "text": "Switch, it wins 2/3 of the time"
+    },
+    {
+      "id": "c",
+      "text": "Stay, it wins 2/3 of the time"
+    },
+    {
+      "id": "d",
+      "text": "It makes no difference"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "Your first pick is right 1/3 of the time, so the other two doors together hold 2/3. The host always opens a goat door, which concentrates that entire 2/3 on the single remaining door, so switching wins twice as often.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

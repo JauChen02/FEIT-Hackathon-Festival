@@ -1,0 +1,37 @@
+{
+  "externalId": "logic-converse-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "propositions",
+  "type": "MCQ",
+  "difficulty": 3,
+  "prompt": "If a shape is a square, then it has four sides. The shape has four sides. What follows?",
+  "options": [
+    {
+      "id": "a",
+      "text": "It is a square"
+    },
+    {
+      "id": "b",
+      "text": "It is not a square"
+    },
+    {
+      "id": "c",
+      "text": "It may or may not be a square"
+    },
+    {
+      "id": "d",
+      "text": "It is a rectangle"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "c"
+  },
+  "explanation": "Affirming the consequent is invalid. A rhombus and a trapezium also have four sides, so four-sidedness does not force squareness.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

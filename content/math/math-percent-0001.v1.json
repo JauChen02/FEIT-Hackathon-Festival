@@ -1,0 +1,19 @@
+{
+  "externalId": "math-percent-0001",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "percentages",
+  "type": "NUMERIC",
+  "difficulty": 2,
+  "prompt": "What is 15% of 240?",
+  "answer": {
+    "value": "36"
+  },
+  "explanation": "10% of 240 is 24, and 5% is half of that, 12. 24 + 12 = 36. Splitting a percentage into 10% and 5% chunks avoids long multiplication.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

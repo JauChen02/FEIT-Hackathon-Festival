@@ -1,0 +1,37 @@
+{
+  "externalId": "science-periodic-0001",
+  "versionNumber": 1,
+  "category": "science",
+  "subTopic": "chemistry",
+  "type": "MCQ",
+  "difficulty": 3,
+  "prompt": "What do elements in the same column of the periodic table share?",
+  "options": [
+    {
+      "id": "a",
+      "text": "The same mass"
+    },
+    {
+      "id": "b",
+      "text": "The same number of outer-shell electrons"
+    },
+    {
+      "id": "c",
+      "text": "The same number of neutrons"
+    },
+    {
+      "id": "d",
+      "text": "The same state at room temperature"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "A column, or group, shares outer-shell electron count, which is what drives chemical behaviour. Mass and neutron count rise down a group, and states vary.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

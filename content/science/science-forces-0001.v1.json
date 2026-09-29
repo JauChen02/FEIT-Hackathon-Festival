@@ -1,0 +1,37 @@
+{
+  "externalId": "science-forces-0001",
+  "versionNumber": 1,
+  "category": "science",
+  "subTopic": "physics",
+  "type": "MCQ",
+  "difficulty": 2,
+  "prompt": "An object moves at constant velocity. What is the net force on it?",
+  "options": [
+    {
+      "id": "a",
+      "text": "Zero"
+    },
+    {
+      "id": "b",
+      "text": "Constant and non-zero"
+    },
+    {
+      "id": "c",
+      "text": "Increasing"
+    },
+    {
+      "id": "d",
+      "text": "Equal to its weight"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "a"
+  },
+  "explanation": "By Newton's first law, constant velocity means no acceleration, and no acceleration means zero net force. Individual forces may still act; they simply cancel.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

@@ -1,0 +1,37 @@
+{
+  "externalId": "science-genetics-0001",
+  "versionNumber": 1,
+  "category": "science",
+  "subTopic": "biology",
+  "type": "MCQ",
+  "difficulty": 3,
+  "prompt": "Two parents both carry one copy of a recessive allele. What is the chance their child shows the recessive trait?",
+  "options": [
+    {
+      "id": "a",
+      "text": "0%"
+    },
+    {
+      "id": "b",
+      "text": "25%"
+    },
+    {
+      "id": "c",
+      "text": "50%"
+    },
+    {
+      "id": "d",
+      "text": "75%"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "Each parent passes the recessive allele half the time, and the trait appears only with two copies: 1/2 x 1/2 = 1/4, so 25%.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

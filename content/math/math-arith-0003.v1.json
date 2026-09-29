@@ -1,0 +1,37 @@
+{
+  "externalId": "math-arith-0003",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "arithmetic",
+  "type": "MCQ",
+  "difficulty": 1,
+  "prompt": "Which of these numbers is even?",
+  "options": [
+    {
+      "id": "a",
+      "text": "37"
+    },
+    {
+      "id": "b",
+      "text": "51"
+    },
+    {
+      "id": "c",
+      "text": "64"
+    },
+    {
+      "id": "d",
+      "text": "79"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "c"
+  },
+  "explanation": "A number is even when its last digit is 0, 2, 4, 6 or 8. Only 64 ends in one of those, so only 64 divides exactly by 2.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

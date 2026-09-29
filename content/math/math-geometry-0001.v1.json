@@ -1,0 +1,19 @@
+{
+  "externalId": "math-geometry-0001",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "geometry",
+  "type": "NUMERIC",
+  "difficulty": 3,
+  "prompt": "A rectangle is 12 cm long and 7 cm wide. What is its perimeter in centimetres?",
+  "answer": {
+    "value": "38"
+  },
+  "explanation": "Perimeter is the distance all the way around: 2 x (12 + 7) = 2 x 19 = 38 cm. Multiplying 12 x 7 would give the area, 84 square centimetres, which answers a different question.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

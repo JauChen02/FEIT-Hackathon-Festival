@@ -1,0 +1,37 @@
+{
+  "externalId": "math-ratios-0001",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "ratios",
+  "type": "MCQ",
+  "difficulty": 3,
+  "prompt": "A recipe uses flour and sugar in the ratio 5:2. If you use 350 g of flour, how much sugar do you need?",
+  "options": [
+    {
+      "id": "a",
+      "text": "70 g"
+    },
+    {
+      "id": "b",
+      "text": "140 g"
+    },
+    {
+      "id": "c",
+      "text": "175 g"
+    },
+    {
+      "id": "d",
+      "text": "875 g"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "350 g of flour is 5 parts, so one part is 350 / 5 = 70 g. Sugar is 2 parts: 2 x 70 = 140 g.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

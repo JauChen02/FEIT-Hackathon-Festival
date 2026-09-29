@@ -1,0 +1,37 @@
+{
+  "externalId": "logic-knights-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "puzzles",
+  "type": "MCQ",
+  "difficulty": 4,
+  "prompt": "On an island, knights always tell the truth and knaves always lie. A says 'I am a knave'. What is A?",
+  "options": [
+    {
+      "id": "a",
+      "text": "A knight"
+    },
+    {
+      "id": "b",
+      "text": "A knave"
+    },
+    {
+      "id": "c",
+      "text": "Neither is possible"
+    },
+    {
+      "id": "d",
+      "text": "Cannot be determined"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "c"
+  },
+  "explanation": "A knight cannot truthfully call itself a knave, and a knave cannot falsely call itself a knave, because that statement would be true. No consistent assignment exists, so the situation is impossible.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

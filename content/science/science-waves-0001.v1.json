@@ -1,0 +1,19 @@
+{
+  "externalId": "science-waves-0001",
+  "versionNumber": 1,
+  "category": "science",
+  "subTopic": "physics",
+  "type": "NUMERIC",
+  "difficulty": 4,
+  "prompt": "A wave has a frequency of 50 Hz and a wavelength of 6 m. What is its speed in metres per second?",
+  "answer": {
+    "value": "300"
+  },
+  "explanation": "Wave speed is frequency times wavelength: 50 x 6 = 300 m/s. Fifty wave crests pass each second, each 6 m apart.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

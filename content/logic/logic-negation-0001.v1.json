@@ -1,0 +1,37 @@
+{
+  "externalId": "logic-negation-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "propositions",
+  "type": "MCQ",
+  "difficulty": 1,
+  "prompt": "What is the negation of 'all swans are white'?",
+  "options": [
+    {
+      "id": "a",
+      "text": "No swans are white"
+    },
+    {
+      "id": "b",
+      "text": "All swans are black"
+    },
+    {
+      "id": "c",
+      "text": "At least one swan is not white"
+    },
+    {
+      "id": "d",
+      "text": "Some swans are white"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "c"
+  },
+  "explanation": "The negation of 'all X are Y' is 'at least one X is not Y'. A single non-white swan is enough to make the original claim false; you do not need every swan to be non-white.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

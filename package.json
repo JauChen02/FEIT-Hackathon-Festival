@@ -1,0 +1,41 @@
+{
+  "name": "learnarena",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@11.10.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:integration": "turbo run test:integration",
+    "test:e2e": "pnpm --filter @learnarena/web test:e2e",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "pnpm --filter @learnarena/db db:generate",
+    "db:migrate": "pnpm --filter @learnarena/db db:migrate",
+    "db:push": "pnpm --filter @learnarena/db db:push",
+    "db:seed": "pnpm --filter @learnarena/db db:seed",
+    "db:reset": "pnpm --filter @learnarena/db db:reset",
+    "content:import": "pnpm --filter @learnarena/db content:import",
+    "supabase": "supabase"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.37.0",
+    "eslint": "^9.37.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "supabase": "^2.48.3",
+    "tsx": "^4.20.6",
+    "turbo": "^2.5.8",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.0",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "externalId": "math-algebra-0002",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "algebra",
+  "type": "MCQ",
+  "difficulty": 3,
+  "prompt": "Which expression is equivalent to 2(x + 3) - x?",
+  "options": [
+    {
+      "id": "a",
+      "text": "x + 6"
+    },
+    {
+      "id": "b",
+      "text": "3x + 6"
+    },
+    {
+      "id": "c",
+      "text": "x + 3"
+    },
+    {
+      "id": "d",
+      "text": "2x + 3"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "a"
+  },
+  "explanation": "Expand the bracket first: 2(x + 3) = 2x + 6. Then 2x + 6 - x = x + 6. The distributive law applies to both terms inside the bracket, not just the first.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

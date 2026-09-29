@@ -1,0 +1,19 @@
+{
+  "externalId": "logic-induction-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "patterns",
+  "type": "NUMERIC",
+  "difficulty": 5,
+  "prompt": "The sequence 1, 1, 2, 3, 5, 8, 13 adds the two previous terms. What is the tenth term?",
+  "answer": {
+    "value": "55"
+  },
+  "explanation": "Continue the Fibonacci rule: 21 is the eighth term, 34 the ninth, and 21 + 34 = 55 the tenth.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

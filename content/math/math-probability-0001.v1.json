@@ -1,0 +1,37 @@
+{
+  "externalId": "math-probability-0001",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "probability",
+  "type": "MCQ",
+  "difficulty": 5,
+  "prompt": "Two fair six-sided dice are rolled. What is the probability that the total is 7?",
+  "options": [
+    {
+      "id": "a",
+      "text": "1/6"
+    },
+    {
+      "id": "b",
+      "text": "1/12"
+    },
+    {
+      "id": "c",
+      "text": "5/36"
+    },
+    {
+      "id": "d",
+      "text": "7/36"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "a"
+  },
+  "explanation": "There are 36 equally likely outcomes. Six of them total 7: (1,6), (2,5), (3,4), (4,3), (5,2), (6,1). 6/36 = 1/6. Seven is the most likely total precisely because it has the most combinations.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

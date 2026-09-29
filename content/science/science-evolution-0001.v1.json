@@ -1,0 +1,37 @@
+{
+  "externalId": "science-evolution-0001",
+  "versionNumber": 1,
+  "category": "science",
+  "subTopic": "biology",
+  "type": "MCQ",
+  "difficulty": 4,
+  "prompt": "Which best describes natural selection?",
+  "options": [
+    {
+      "id": "a",
+      "text": "Organisms change their bodies to suit the environment"
+    },
+    {
+      "id": "b",
+      "text": "Individuals with advantageous inherited traits leave more offspring"
+    },
+    {
+      "id": "c",
+      "text": "Mutations always improve an organism"
+    },
+    {
+      "id": "d",
+      "text": "Species evolve towards a fixed goal"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "Selection acts on heritable variation that already exists: the variants that reproduce more become common. Individuals do not adapt during their lifetime, and evolution has no target.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

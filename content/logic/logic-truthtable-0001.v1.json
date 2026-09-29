@@ -1,0 +1,37 @@
+{
+  "externalId": "logic-truthtable-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "propositions",
+  "type": "MCQ",
+  "difficulty": 3,
+  "prompt": "For which values is 'P AND NOT Q' true?",
+  "options": [
+    {
+      "id": "a",
+      "text": "P true, Q true"
+    },
+    {
+      "id": "b",
+      "text": "P true, Q false"
+    },
+    {
+      "id": "c",
+      "text": "P false, Q true"
+    },
+    {
+      "id": "d",
+      "text": "P false, Q false"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "An AND is true only when both sides are true. NOT Q is true exactly when Q is false, so the expression needs P true and Q false.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

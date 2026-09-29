@@ -1,0 +1,37 @@
+{
+  "externalId": "math-arith-0002",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "arithmetic",
+  "type": "MCQ",
+  "difficulty": 1,
+  "prompt": "What is 9 x 7?",
+  "options": [
+    {
+      "id": "a",
+      "text": "56"
+    },
+    {
+      "id": "b",
+      "text": "63"
+    },
+    {
+      "id": "c",
+      "text": "72"
+    },
+    {
+      "id": "d",
+      "text": "69"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "9 x 7 is one group of 7 less than 10 x 7. 70 - 7 = 63.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

@@ -1,0 +1,19 @@
+{
+  "externalId": "logic-pigeonhole-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "counting",
+  "type": "NUMERIC",
+  "difficulty": 4,
+  "prompt": "A drawer holds black and white socks mixed together. How many socks must you take in the dark to be certain of a matching pair?",
+  "answer": {
+    "value": "3"
+  },
+  "explanation": "With only two colours, the first two socks might differ, but the third must match one of them. This is the pigeonhole principle: three items in two categories force a repeat.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

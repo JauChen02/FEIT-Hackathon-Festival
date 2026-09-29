@@ -1,0 +1,37 @@
+{
+  "externalId": "logic-oddone-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "classification",
+  "type": "MCQ",
+  "difficulty": 1,
+  "prompt": "Which word does not belong: apple, banana, carrot, cherry?",
+  "options": [
+    {
+      "id": "a",
+      "text": "apple"
+    },
+    {
+      "id": "b",
+      "text": "banana"
+    },
+    {
+      "id": "c",
+      "text": "carrot"
+    },
+    {
+      "id": "d",
+      "text": "cherry"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "c"
+  },
+  "explanation": "Apple, banana and cherry are fruits; a carrot is a root vegetable. The odd one out is the item that fails the property the others share.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

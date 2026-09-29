@@ -1,0 +1,37 @@
+{
+  "externalId": "math-fractions-0001",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "fractions",
+  "type": "MCQ",
+  "difficulty": 2,
+  "prompt": "What is 3/4 + 1/8?",
+  "options": [
+    {
+      "id": "a",
+      "text": "4/12"
+    },
+    {
+      "id": "b",
+      "text": "7/8"
+    },
+    {
+      "id": "c",
+      "text": "1/2"
+    },
+    {
+      "id": "d",
+      "text": "4/8"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "Rewrite 3/4 with a denominator of 8: 3/4 = 6/8. Then 6/8 + 1/8 = 7/8. Adding fractions requires a common denominator; you never add the denominators themselves.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

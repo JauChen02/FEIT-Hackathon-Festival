@@ -1,0 +1,37 @@
+{
+  "externalId": "math-quadratic-0001",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "algebra",
+  "type": "MCQ",
+  "difficulty": 4,
+  "prompt": "What are the solutions of x^2 - 5x + 6 = 0?",
+  "options": [
+    {
+      "id": "a",
+      "text": "x = 1 or x = 6"
+    },
+    {
+      "id": "b",
+      "text": "x = 2 or x = 3"
+    },
+    {
+      "id": "c",
+      "text": "x = -2 or x = -3"
+    },
+    {
+      "id": "d",
+      "text": "x = 5 or x = 6"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "Factorise into (x - 2)(x - 3) = 0, because -2 and -3 multiply to +6 and add to -5. A product is zero only when a factor is zero, so x = 2 or x = 3.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

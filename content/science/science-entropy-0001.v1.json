@@ -1,0 +1,37 @@
+{
+  "externalId": "science-entropy-0001",
+  "versionNumber": 1,
+  "category": "science",
+  "subTopic": "physics",
+  "type": "MCQ",
+  "difficulty": 5,
+  "prompt": "A fridge makes its inside colder. Why does this not violate the second law of thermodynamics?",
+  "options": [
+    {
+      "id": "a",
+      "text": "Cold is not a form of energy"
+    },
+    {
+      "id": "b",
+      "text": "The fridge exports more entropy to the room than it removes"
+    },
+    {
+      "id": "c",
+      "text": "The second law applies only to gases"
+    },
+    {
+      "id": "d",
+      "text": "Electricity is exempt from the second law"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "The second law constrains the whole system, not one corner of it. The fridge lowers entropy inside by raising it more outside, which is why the back of a fridge is warm.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

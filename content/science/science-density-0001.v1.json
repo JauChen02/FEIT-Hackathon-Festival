@@ -1,0 +1,19 @@
+{
+  "externalId": "science-density-0001",
+  "versionNumber": 1,
+  "category": "science",
+  "subTopic": "physics",
+  "type": "NUMERIC",
+  "difficulty": 2,
+  "prompt": "A block has a mass of 240 g and a volume of 30 cubic centimetres. What is its density in grams per cubic centimetre?",
+  "answer": {
+    "value": "8"
+  },
+  "explanation": "Density is mass divided by volume: 240 / 30 = 8 g per cubic centimetre. That is close to iron, which is about 7.9.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

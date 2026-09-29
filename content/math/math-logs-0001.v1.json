@@ -1,0 +1,37 @@
+{
+  "externalId": "math-logs-0001",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "algebra",
+  "type": "MCQ",
+  "difficulty": 5,
+  "prompt": "If 2^x = 32, what is x?",
+  "options": [
+    {
+      "id": "a",
+      "text": "4"
+    },
+    {
+      "id": "b",
+      "text": "5"
+    },
+    {
+      "id": "c",
+      "text": "6"
+    },
+    {
+      "id": "d",
+      "text": "16"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "Count the doublings: 2, 4, 8, 16, 32 is five of them, so 2^5 = 32 and x = 5. Answering 16 confuses the exponent with half the result.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

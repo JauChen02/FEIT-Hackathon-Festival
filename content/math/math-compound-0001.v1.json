@@ -1,0 +1,19 @@
+{
+  "externalId": "math-compound-0001",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "percentages",
+  "type": "NUMERIC",
+  "difficulty": 4,
+  "prompt": "A price of $200 rises by 10%, then falls by 10%. What is the final price in dollars?",
+  "answer": {
+    "value": "198"
+  },
+  "explanation": "After the rise: 200 x 1.10 = 220. After the fall: 220 x 0.90 = 198. The two changes do not cancel, because the 10% fall is taken from the larger amount.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

@@ -1,0 +1,19 @@
+{
+  "externalId": "math-arith-0001",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "arithmetic",
+  "type": "NUMERIC",
+  "difficulty": 1,
+  "prompt": "What is 17 + 26?",
+  "answer": {
+    "value": "43"
+  },
+  "explanation": "Add the tens first (10 + 20 = 30), then the ones (7 + 6 = 13). 30 + 13 = 43.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

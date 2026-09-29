@@ -1,0 +1,37 @@
+{
+  "externalId": "logic-ordering-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "ordering",
+  "type": "MCQ",
+  "difficulty": 3,
+  "prompt": "Amy is taller than Ben. Cal is shorter than Ben. Dee is taller than Amy. Who is tallest?",
+  "options": [
+    {
+      "id": "a",
+      "text": "Amy"
+    },
+    {
+      "id": "b",
+      "text": "Ben"
+    },
+    {
+      "id": "c",
+      "text": "Cal"
+    },
+    {
+      "id": "d",
+      "text": "Dee"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "d"
+  },
+  "explanation": "The chain is Cal < Ben < Amy < Dee, so Dee is tallest. Placing the relations on a single line makes the ordering obvious.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

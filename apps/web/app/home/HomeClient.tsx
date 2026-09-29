@@ -1,0 +1,95 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { uuidv7, type CreateSessionResponse } from '@learnarena/core';
+import { ActiveSessionPrompt } from '@/components/ui-app/ActiveSessionPrompt';
+import { CategoryPicker, type CategoryOption } from '@/components/ui-app/CategoryPicker';
+import type { ApiError } from '@/components/ui-app/StateBoundary';
+import { apiFetch } from '@/hooks/useApi';
+
+/**
+ * Starting a quiz from Home (PLANNING.md §20 screen 3).
+ *
+ * ADR-021: this owns the calls and the state; `CategoryPicker` and
+ * `ActiveSessionPrompt` only render.
+ */
+
+interface OpenSession {
+  sessionId: string;
+  status: 'CREATED' | 'ACTIVE';
+}
+
+export function HomeClient({ categories }: { categories: readonly CategoryOption[] }) {
+  const router = useRouter();
+  const [startingSlug, setStartingSlug] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
+  const [openSession, setOpenSession] = useState<OpenSession | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function start(slug: string) {
+    setStartingSlug(slug);
+    setError(null);
+
+    const result = await apiFetch<CreateSessionResponse>('/api/sessions', {
+      method: 'POST',
+      // §18.1: the key makes a retried POST return the same session rather
+      // than opening a second one.
+      headers: { 'idempotency-key': uuidv7() },
+      body: JSON.stringify({ gameType: 'quiz_solo', categorySlug: slug }),
+    });
+
+    if (result.ok) {
+      router.push(`/play/${result.data.sessionId}`);
+      return;
+    }
+
+    setStartingSlug(null);
+
+    // §8.1: "the client offers Resume or Abandon".
+    if (result.error.code === 'ACTIVE_SESSION_EXISTS') {
+      const details = result.error.details as
+        { sessionId?: string; status?: 'CREATED' | 'ACTIVE' } | undefined;
+      if (details?.sessionId && details.status) {
+        setOpenSession({ sessionId: details.sessionId, status: details.status });
+        return;
+      }
+    }
+    setError(result.error);
+  }
+
+  async function discardOpenSession() {
+    if (!openSession) return;
+    setBusy(true);
+
+    // §15.1 has no CREATED → ABANDONED edge, so which call to make depends on
+    // whether anything was served (ADR-041).
+    const action = openSession.status === 'ACTIVE' ? 'abandon' : 'cancel';
+    await apiFetch(`/api/sessions/${openSession.sessionId}/${action}`, { method: 'POST' });
+
+    setBusy(false);
+    setOpenSession(null);
+    router.refresh();
+  }
+
+  if (openSession) {
+    return (
+      <ActiveSessionPrompt
+        sessionId={openSession.sessionId}
+        status={openSession.status}
+        busy={busy}
+        onResume={() => router.push(`/play/${openSession.sessionId}`)}
+        onDiscard={() => void discardOpenSession()}
+      />
+    );
+  }
+
+  return (
+    <CategoryPicker
+      categories={categories}
+      startingSlug={startingSlug}
+      error={error}
+      onStart={(slug) => void start(slug)}
+    />
+  );
+}

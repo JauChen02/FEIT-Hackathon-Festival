@@ -1,0 +1,37 @@
+{
+  "externalId": "science-equilibrium-0001",
+  "versionNumber": 1,
+  "category": "science",
+  "subTopic": "chemistry",
+  "type": "MCQ",
+  "difficulty": 5,
+  "prompt": "A reaction at equilibrium is compressed into a smaller volume. Which way does it shift?",
+  "options": [
+    {
+      "id": "a",
+      "text": "Towards the side with fewer gas molecules"
+    },
+    {
+      "id": "b",
+      "text": "Towards the side with more gas molecules"
+    },
+    {
+      "id": "c",
+      "text": "It stops entirely"
+    },
+    {
+      "id": "d",
+      "text": "It shifts towards the solids"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "a"
+  },
+  "explanation": "By Le Chatelier's principle the system opposes the change. Raising the pressure favours the side with fewer gas molecules, because that reduces the pressure again.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

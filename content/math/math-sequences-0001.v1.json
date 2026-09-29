@@ -1,0 +1,19 @@
+{
+  "externalId": "math-sequences-0001",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "sequences",
+  "type": "NUMERIC",
+  "difficulty": 5,
+  "prompt": "The sequence 3, 7, 15, 31, 63 doubles and adds 1 each step. What is the next term?",
+  "answer": {
+    "value": "127"
+  },
+  "explanation": "Each term is 2n + 1 applied to the previous term: 63 x 2 + 1 = 127. Every term is also one less than a power of two, so the sequence is 2^2-1, 2^3-1, 2^4-1, ... and the next is 2^7-1 = 127.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

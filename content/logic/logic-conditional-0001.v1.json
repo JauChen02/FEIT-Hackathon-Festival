@@ -1,0 +1,37 @@
+{
+  "externalId": "logic-conditional-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "propositions",
+  "type": "MCQ",
+  "difficulty": 2,
+  "prompt": "If it rains, the match is cancelled. The match was not cancelled. What can you conclude?",
+  "options": [
+    {
+      "id": "a",
+      "text": "It rained"
+    },
+    {
+      "id": "b",
+      "text": "It did not rain"
+    },
+    {
+      "id": "c",
+      "text": "The match was postponed"
+    },
+    {
+      "id": "d",
+      "text": "Nothing"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "This is modus tollens: if P implies Q and Q is false, then P is false. The match going ahead rules out rain.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

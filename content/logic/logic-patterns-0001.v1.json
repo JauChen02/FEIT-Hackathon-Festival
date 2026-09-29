@@ -1,0 +1,37 @@
+{
+  "externalId": "logic-patterns-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "patterns",
+  "type": "MCQ",
+  "difficulty": 1,
+  "prompt": "What comes next in the sequence: 2, 4, 6, 8, ?",
+  "options": [
+    {
+      "id": "a",
+      "text": "9"
+    },
+    {
+      "id": "b",
+      "text": "10"
+    },
+    {
+      "id": "c",
+      "text": "12"
+    },
+    {
+      "id": "d",
+      "text": "16"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "Each term is 2 more than the one before, so the next is 8 + 2 = 10. Answering 16 assumes doubling, which does not fit 2 to 4 to 6.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

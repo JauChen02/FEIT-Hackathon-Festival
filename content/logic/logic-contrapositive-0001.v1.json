@@ -1,0 +1,37 @@
+{
+  "externalId": "logic-contrapositive-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "propositions",
+  "type": "MCQ",
+  "difficulty": 4,
+  "prompt": "Which statement is logically equivalent to 'if you pass, you studied'?",
+  "options": [
+    {
+      "id": "a",
+      "text": "If you studied, you passed"
+    },
+    {
+      "id": "b",
+      "text": "If you did not study, you did not pass"
+    },
+    {
+      "id": "c",
+      "text": "If you did not pass, you did not study"
+    },
+    {
+      "id": "d",
+      "text": "If you passed, you did not study"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "The contrapositive of 'P implies Q' is 'not Q implies not P'. Here P is 'you pass' and Q is 'you studied', so the equivalent form is 'if you did not study, you did not pass'.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

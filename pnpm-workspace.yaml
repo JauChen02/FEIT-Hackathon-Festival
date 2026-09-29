@@ -1,0 +1,13 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Build scripts we explicitly allow to run on install.
+allowBuilds:
+  esbuild: true
+  '@tailwindcss/oxide': true
+  sharp: true
+  unrs-resolver: true
+  supabase: true
+  '@sentry/cli': false
+  protobufjs: false

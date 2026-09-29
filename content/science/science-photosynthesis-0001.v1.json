@@ -1,0 +1,37 @@
+{
+  "externalId": "science-photosynthesis-0001",
+  "versionNumber": 1,
+  "category": "science",
+  "subTopic": "biology",
+  "type": "MCQ",
+  "difficulty": 2,
+  "prompt": "What gas do plants take in during photosynthesis?",
+  "options": [
+    {
+      "id": "a",
+      "text": "Oxygen"
+    },
+    {
+      "id": "b",
+      "text": "Nitrogen"
+    },
+    {
+      "id": "c",
+      "text": "Carbon dioxide"
+    },
+    {
+      "id": "d",
+      "text": "Hydrogen"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "c"
+  },
+  "explanation": "Plants absorb carbon dioxide and release oxygen. It is easy to reverse these, because respiration, which plants also do, runs the other way.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

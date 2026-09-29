@@ -1,0 +1,19 @@
+{
+  "externalId": "math-algebra-0001",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "algebra",
+  "type": "NUMERIC",
+  "difficulty": 2,
+  "prompt": "If 3x + 5 = 20, what is x?",
+  "answer": {
+    "value": "5"
+  },
+  "explanation": "Subtract 5 from both sides: 3x = 15. Divide both sides by 3: x = 5. Always undo addition before undoing multiplication.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

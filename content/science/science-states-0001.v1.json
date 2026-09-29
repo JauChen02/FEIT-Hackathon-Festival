@@ -1,0 +1,37 @@
+{
+  "externalId": "science-states-0001",
+  "versionNumber": 1,
+  "category": "science",
+  "subTopic": "chemistry",
+  "type": "MCQ",
+  "difficulty": 1,
+  "prompt": "What is the process called when a liquid turns into a gas?",
+  "options": [
+    {
+      "id": "a",
+      "text": "Condensation"
+    },
+    {
+      "id": "b",
+      "text": "Evaporation"
+    },
+    {
+      "id": "c",
+      "text": "Sublimation"
+    },
+    {
+      "id": "d",
+      "text": "Deposition"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "Evaporation is liquid to gas. Condensation is the reverse, gas to liquid, and sublimation skips the liquid stage entirely, going solid to gas.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

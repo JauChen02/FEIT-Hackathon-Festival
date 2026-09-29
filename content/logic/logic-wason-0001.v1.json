@@ -1,0 +1,37 @@
+{
+  "externalId": "logic-wason-0001",
+  "versionNumber": 1,
+  "category": "logic",
+  "subTopic": "puzzles",
+  "type": "MCQ",
+  "difficulty": 5,
+  "prompt": "Four cards show A, K, 4 and 7. Each has a letter on one side and a number on the other. To test 'if a card has a vowel on one side, it has an even number on the other', which cards must you turn?",
+  "options": [
+    {
+      "id": "a",
+      "text": "A and 4"
+    },
+    {
+      "id": "b",
+      "text": "A and 7"
+    },
+    {
+      "id": "c",
+      "text": "A, K and 4"
+    },
+    {
+      "id": "d",
+      "text": "K and 7"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "Turn A, because a vowel with an odd number would break the rule. Turn 7, because a vowel on its back would also break it. The 4 is irrelevant: the rule says nothing about what must be behind an even number.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

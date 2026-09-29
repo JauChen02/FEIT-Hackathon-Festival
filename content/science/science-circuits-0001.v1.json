@@ -1,0 +1,19 @@
+{
+  "externalId": "science-circuits-0001",
+  "versionNumber": 1,
+  "category": "science",
+  "subTopic": "physics",
+  "type": "NUMERIC",
+  "difficulty": 3,
+  "prompt": "A 12 V battery drives a current of 3 A through a resistor. What is the resistance in ohms?",
+  "answer": {
+    "value": "4"
+  },
+  "explanation": "Ohm's law gives R = V / I = 12 / 3 = 4 ohms. Multiplying instead would give power in watts, a different quantity.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

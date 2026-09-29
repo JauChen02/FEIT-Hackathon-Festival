@@ -1,0 +1,37 @@
+{
+  "externalId": "science-body-0001",
+  "versionNumber": 1,
+  "category": "science",
+  "subTopic": "biology",
+  "type": "MCQ",
+  "difficulty": 1,
+  "prompt": "Which organ pumps blood around the body?",
+  "options": [
+    {
+      "id": "a",
+      "text": "Lungs"
+    },
+    {
+      "id": "b",
+      "text": "Liver"
+    },
+    {
+      "id": "c",
+      "text": "Heart"
+    },
+    {
+      "id": "d",
+      "text": "Kidneys"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "c"
+  },
+  "explanation": "The heart is a muscular pump. The lungs add oxygen to blood, but they do not move it; that is the heart's job.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

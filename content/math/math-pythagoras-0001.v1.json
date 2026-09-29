@@ -1,0 +1,19 @@
+{
+  "externalId": "math-pythagoras-0001",
+  "versionNumber": 1,
+  "category": "math",
+  "subTopic": "geometry",
+  "type": "NUMERIC",
+  "difficulty": 4,
+  "prompt": "A right-angled triangle has legs of 9 cm and 12 cm. What is the length of the hypotenuse in centimetres?",
+  "answer": {
+    "value": "15"
+  },
+  "explanation": "By Pythagoras, h^2 = 9^2 + 12^2 = 81 + 144 = 225, so h = 15 cm. This is the 3-4-5 triangle scaled by 3.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

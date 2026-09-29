@@ -1,0 +1,37 @@
+{
+  "name": "@learnarena/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts",
+    "./loadEnv": "./src/loadEnv.ts"
+  },
+  "scripts": {
+    "lint": "eslint src tests",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:integration": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/commands/migrate.ts",
+    "db:push": "tsx src/commands/push.ts",
+    "db:seed": "tsx src/commands/seed.ts",
+    "db:reset": "tsx src/commands/reset.ts",
+    "content:import": "tsx src/commands/contentImportCli.ts"
+  },
+  "dependencies": {
+    "@learnarena/core": "workspace:*",
+    "drizzle-orm": "^0.44.6",
+    "postgres": "^3.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.8",
+    "drizzle-kit": "^0.31.5",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

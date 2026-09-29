@@ -1,0 +1,425 @@
+# LearnArena: Architectural Decision Records
+
+Format and rules: see PLANNING.md Appendix B. Append new ADRs at the bottom; never edit an accepted ADR except to mark it superseded.
+
+---
+
+## ADR-001: Target audience is 16+ self-directed learners
+
+- Status: **Provisional** (product owner must confirm before MVP build)
+- Date: 2026-09-29
+- Phase: Pre-build
+- Context: Audience drives privacy, moderation, tone and social features. Admitting under-16s triggers child-privacy obligations and parental consent flows.
+- Decision: 16+ with age confirmation at onboarding; English-speaking, global; mobile-first web.
+- Consequences: No parental-consent flow in MVP. If the audience changes to include minors, §19 privacy/safety items become release blockers from Social Beta onward.
+
+## ADR-002: Launch categories are math, logic, science
+
+- Status: **Provisional**
+- Date: 2026-09-29
+- Phase: Pre-build
+- Context: Six broad categories at launch would turn content creation into an uncontrolled parallel project. Memory can't be assessed by multiple-choice quizzes.
+- Decision: MVP launches with math, logic and science. Memory arrives in Alpha with `memory_match`. Language and history are deferred.
+- Consequences: Coach radar has 3 axes in MVP, 4 in Alpha.
+
+## ADR-003: Authentication required; no guest play
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Context: Guest play needs anonymous ids, expiry, migration and abuse limits.
+- Decision: Users must sign up and onboard before playing.
+- Consequences: Slightly higher first-play friction; much simpler data model.
+
+## ADR-004: Consumer-first tenancy
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: Users exist independently. No organizations in MVP; future classrooms/organizations will reference users.
+
+## ADR-005: Canonical tech stack
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: As listed in PLANNING.md §21.1 (Next.js, TypeScript, Tailwind, shadcn/ui, Supabase Postgres + Auth, Drizzle, Upstash Redis, Inngest, Socket.IO, Vercel, Railway, Vitest, Playwright, Sentry, pino/Axiom, PostHog, decimal.js, @date-fns/tz).
+- Consequences: The agent must not introduce alternatives for covered concerns.
+
+## ADR-006: Postgres point ledger is the canonical points source
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: `point_ledger` is append-only and canonical. `users.total_points_cached` and Redis leaderboards are rebuildable projections. Corrections are `ADJUSTMENT` rows.
+
+## ADR-007: Coach is category-level only in MVP
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: Sub-topic is stored on learning events for summaries and analytics, but no sub-topic proficiency is modeled or displayed.
+
+## ADR-008: Published question versions are immutable
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: Assessment-critical fields live on `question_versions` and are immutable once out of `DRAFT`. Edits create new versions; one LIVE version per question.
+
+## ADR-009: Question ratings fixed from difficulty in MVP
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: Rating = 700 + 100 × difficulty (800..1200), fixed after publishing. No auto-calibration until promoted from the deferred list.
+
+## ADR-010: Target 70% expected success (item rating = user rating − 147)
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Context: The original plan's "slightly above the user's rating" contradicted "~70% success" under the Elo formula.
+- Decision: Select questions nearest to `user_rating − 147`; acceptable band 65% to 75% (−108 to −191).
+
+## ADR-011: Solo questions are served one at a time
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Context: Speed factors must be server-measured.
+- Decision: The server records `served_at`/`deadline_at` per question; speed factor uses server receive time with 1 s grace.
+
+## ADR-012: One open solo session per user
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: Enforced by a partial unique index; clients resume or abandon.
+
+## ADR-013: Streaks are derived from stored local dates; no midnight cron
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: `streak_days` rows are written at qualifying completion using the user's timezone at that moment; freezes are consumed lazily at the next qualifying completion; display state is computed at read time.
+
+## ADR-014: Leaderboards use immutable UTC ISO week keys
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: `YYYY-Www` in UTC for global and friends boards. Redis projection written with absolute `ZADD` from Postgres sums; rebuildable; no destructive reset.
+
+## ADR-015: Multiplier cap applies to raw base before combo
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: `final = round_half_up(min(combo_adjusted × session_mult, raw_base × 4.0))`; rounding once at the end; decimal.js arithmetic.
+
+## ADR-016: Improvement bonus without difficulty normalization
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: Needs ≥ 3 prior qualifying sessions in the category; bonus when accuracy ≥ baseline (last 5) + 0.10. Difficulty normalization deferred; Coach targeting keeps difficulty roughly stable per user, limiting distortion.
+
+## ADR-017: Weakness multiplier not applied in multiplayer
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: Mixed-category matches use `weakness_mult = 1.0`; weakness is addressed through weighted question pools instead.
+
+## ADR-018: Realtime match state is in memory; crash aborts the match
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: No per-event DB writes. Results are written in one transaction at match end. A crash yields `ABORTED` (session `CANCELLED`), no rewards and no learning events.
+- Consequences: Rare lost matches in exchange for simplicity. Revisit if the crash rate is non-trivial.
+
+## ADR-019: Post-commit work via Inngest with hourly reconciliation (no outbox table)
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: Send `session/terminal` after commit with a deterministic event id; the hourly `sessions/reconcile` job re-sends for terminal sessions lacking `post_processed_at`.
+
+## ADR-020: MVP content pipeline is repo JSON + PR review + import command
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: Pre-build
+- Decision: Admin UI is deferred to Alpha. The import command records reviewer metadata and writes audit rows; it refuses in-place edits of existing versions.
+
+## ADR-021: Visual design is deferred to a later Google Stitch pass
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: The UI will be redesigned later using Google Stitch via MCP. Polishing now would be thrown away, and a design pass can only move quickly if it has one place to edit.
+- Decision: Build UI that is functional and easy to reskin, not polished. Unstyled/default shadcn/ui components and Tailwind layout utilities only. All colours, radii, fonts and spacing scales come from CSS variables in ONE theme file (`apps/web/app/globals.css`); no hardcoded hex colours or one-off styles. Data and presentation are separated: route/page files and hooks handle data fetching, state and API calls; presentational components in `components/ui-app/` receive plain props and contain no fetching or business logic. Every screen handles loading, empty and error states, branching on error `code`s (§16.1). No effort on animation, illustrations or visual polish.
+- Consequences: Phase 0 screens look plain. `components/ui/` holds unmodified shadcn primitives; `components/ui-app/` holds LearnArena-specific presentational components. Framer Motion and Recharts are not installed until the phase that needs them.
+
+## ADR-022: A `users` row exists only after onboarding
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §14.2 gives `users` several NOT NULL columns (`username`, `display_name`, `timezone`) that can only be collected on the onboarding screen, so a row cannot be created at signup. Something must represent "authenticated but not onboarded".
+- Decision: The row is created by `POST /api/me/onboarding` and only there. The absence of a row for a Supabase auth id _is_ the onboarding-incomplete state. `onboarding_completed_at` is therefore always set on an existing row.
+- Consequences: One source of truth for the state, and no partially-populated rows. Middleware cannot determine it (it runs on the edge runtime with no database), so the check lives in `requireOnboarded()` and in the server components for `/home` and `/onboarding`.
+
+## ADR-023: Repeat onboarding returns the stored profile unchanged
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §16.2 marks `POST /api/me/onboarding` idempotent but does not say what happens when a repeat call carries _different_ values.
+- Decision: The insert is `ON CONFLICT (id) DO NOTHING`; the row is then read back and returned with `200` and `created: false`. Submitted values are ignored when a row already exists. Profile edits belong to `PATCH /api/me`.
+- Consequences: A retry can never mutate a profile, and a concurrent duplicate request cannot win a write race. A user who wants to change their display name uses the settings screen (Phase 2).
+
+## ADR-024: `PATCH /api/me` is deferred to Phase 2
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: `PATCH /api/me {displayName?, timezone?}` appears in §16.2, but Phase 0's scope line does not list it, and §24 Phase 2 explicitly owns "timezone changes with the 24 h cooldown and `user_timezone_changes` audit".
+- Decision: Not built in Phase 0. It ships whole in Phase 2, together with the cooldown and the audit row.
+- Consequences: Display names cannot be edited in Phase 0. `user_timezone_changes` exists in the schema from Phase 0 because §14.2 tags it [MVP], but nothing writes to it yet.
+
+## ADR-025: One content file per question version
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §13.4 says content is "authored as JSON files in `content/`" and reviewed through pull request, but does not define the granularity.
+- Decision: One JSON file per question **version**, at `content/<category>/<externalId>.v<n>.json`. The importer verifies that the filename matches the `externalId` and `versionNumber` inside.
+- Consequences: A new version is a new file, so pull-request diffs stay readable and a reviewer sees exactly what is being published. A forgotten version bump is caught by the filename check rather than becoming a silent no-op. `rating` is deliberately absent from the file: the importer derives it from `difficulty` (ADR-009), so an author cannot set it by hand.
+
+## ADR-026: Content authors and reviewers are users without auth identities
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: `question_versions.author_id` and `reviewed_by` reference `users`, whose ids are Supabase auth user ids, but the dev-seed content has no human signing in to own it. §13.1 also requires the reviewer to differ from the author.
+- Decision: The seed creates `seed_author` and `seed_reviewer` as ordinary `users` rows with deterministic ids (see `seedIds.ts`) and the AUTHOR / REVIEWER roles, but no Supabase auth identity, so they can never sign in. The importer resolves `authorUsername` / `reviewedByUsername` to these rows and errors clearly if they are missing.
+- Consequences: The reviewer ≠ author CHECK is satisfiable for seeded content. When the Alpha admin UI arrives, real reviewers replace these for new content; existing rows keep pointing at the seed users.
+
+## ADR-027: `GET /api/categories` is the Phase 0 onboarding-guarded route
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §24 Phase 0 requires that "gameplay routes return `ONBOARDING_REQUIRED` before onboarding", but every session endpoint belongs to Phase 1.
+- Decision: `GET /api/categories` (an MVP endpoint from §16.2 that Phase 0 can implement in full — launch categories with live-question counts) carries `requireOnboarded()` and is what demonstrates the guard.
+- Consequences: The guard and its test exist from Phase 0; Phase 1 applies the same `requireOnboarded()` to the session routes without new machinery.
+
+## ADR-028: UUID v7 is implemented in `packages/core`, not taken as a dependency
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §14.1 mandates time-ordered UUID v7 ids generated server-side, but §21.1 names no UUID library, and §29 forbids adding libraries for concerns already covered.
+- Decision: Implement RFC 9562 UUID v7 in `packages/core/src/ids.ts`, with a per-generator monotonic 12-bit sequence so ids are strictly increasing even within one millisecond. Unit-tested for the version nibble, the variant bits, monotonicity across 10,000 ids and sequence overflow.
+- Consequences: No new dependency and no extra supply-chain surface. The generator is a class so a seed script driving it with fixed timestamps cannot perturb the application's id stream.
+
+## ADR-029: "Reversible in local" means `pnpm db:reset`
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §24 Phase 0 requires the migration to be "reversible in local", but `drizzle-kit` does not generate down-migrations, and hand-writing one per migration is a maintenance cost with no production use (§14.4 forbids destructive production migrations anyway).
+- Decision: Reversal in local means `pnpm db:reset` — drop the `public` and `drizzle` schemas, re-apply every migration, re-seed. Guarded to `APP_ENV` local/test.
+- Consequences: There is a single, tested way back to a clean database. If a production rollback is ever needed it requires a new forward migration plus an ADR, which is what §14.4 already demands.
+
+## ADR-030: The content hash covers assessment-critical fields only
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §13.5 requires a `content_hash` but does not define its input. The hash is what lets the importer refuse an edit to a published version (§13.4).
+- Decision: SHA-256 over a canonical (sorted-key) JSON encoding of exactly the fields §13.2 declares immutable: `type`, `prompt`, `options_json`, `answer_json`, `explanation`, category slug, `sub_topic`, `difficulty`, `rating`. Array order is preserved, because option order is part of what the learner saw. Metadata (`source`, `license`, `author`, `reviewer`, timestamps) is excluded.
+- Consequences: Correcting a licence note or attribution is an in-place update; changing anything a learner could see requires a new version. `packages/core` ships its own SHA-256 rather than importing `node:crypto`, so the module stays usable from the browser bundle.
+
+## ADR-031: `content_audit_log.entity_type` is plain text
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §14.2 declares no enum for this column, and Alpha adds scenarios and generator templates as further audited entity kinds.
+- Decision: Keep it `text`. Phase 0 writes only `'question_version'`.
+- Consequences: Adding an entity kind in Alpha needs no migration. The trade-off is no database-level guarantee against a typo; the importer is the only writer in MVP, and the admin UI will be the only other one.
+
+## ADR-032: The point ledger's append-only rule is enforced by a trigger
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §14.2 specifies "UPDATE/DELETE revoked for the app role + trigger that raises on UPDATE/DELETE" (Invariant 3). But the application connects over `DATABASE_URL` as the _owner_ of these tables, and a GRANT-based rule does not bind a table owner or a superuser at all.
+- Decision: `BEFORE UPDATE` and `BEFORE DELETE` row triggers raising `restrict_violation` are the enforcement; they bind every role including superusers. The `REVOKE` statements are kept as defence in depth for the PostgREST-facing `anon` and `authenticated` roles, wrapped in a `DO` block so the migration still applies on a plain Postgres where those roles do not exist.
+- Consequences: The integration test that attempts an UPDATE and a DELETE genuinely fails for the connection the application uses. Corrections remain `ADJUSTMENT` rows (§10.4).
+
+## ADR-033: E2E magic-link sign-in uses `auth.admin.generateLink`
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §22.3 requires an end-to-end sign-up journey. Driving a real magic link means either scraping the email out of Mailpit — brittle HTML parsing, and a race against delivery — or obtaining the link another way.
+- Decision: A test-only helper calls `supabase.auth.admin.generateLink` with the local service-role key and navigates the browser straight to `/auth/callback` with the returned `token_hash`. The helper reads the **`verification_type` from the response** rather than the type it asked for, because requesting a `magiclink` for an address that has never signed in creates the user and returns a `signup` token instead.
+- Consequences: The real `/auth/callback` verification path, cookie handling and redirect logic are exercised; only the email delivery hop is skipped. Mailpit remains available on the local stack for manual checks.
+
+## ADR-034: `apps/realtime` is not created in Phase 0
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §21.2 lists `apps/realtime` in the module layout, but the Socket.IO match server belongs to Multiplayer Beta (§24 Phase 8).
+- Decision: Do not create the package. §29 forbids pre-building later phases, and an empty package is not a minimal interface that avoids an architectural dead end — `packages/core` already holds the pure logic the realtime server will import.
+- Consequences: The monorepo has `apps/web`, `packages/core` and `packages/db`. Phase 8 adds `apps/realtime` alongside them with no restructuring.
+
+## ADR-035: Phase 0 installs only the stack it uses
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §21.1 is the canonical stack for the whole product, not a Phase 0 shopping list. Installing everything up front adds dependencies with no call sites and makes it unclear which phase owns what.
+- Decision: Phase 0 wires Next.js, TypeScript, Tailwind, shadcn/ui, Supabase (Postgres + Auth), Drizzle, Zod, pino, Sentry (inert without a DSN), Vitest, Playwright, ESLint/Prettier and GitHub Actions. Inngest, Upstash Redis + Ratelimit, PostHog, Socket.IO, decimal.js, seedrandom, Recharts, Framer Motion, date-fns/@date-fns/tz, Resend, web-push and the Anthropic client are **not** installed; each arrives with the phase that first needs it. No alternative to a §21.1 choice is ever introduced.
+- Consequences: `pnpm install` stays small and each dependency arrives with its first real use and its tests. The dev seed uses an explicit deterministic correctness pattern rather than a PRNG, so `seedrandom` is genuinely not needed until Phase 1's question selection.
+
+## ADR-036: All six categories are seeded; only the launch three are LAUNCH
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §2.1 names a six-category long-term taxonomy but only three launch categories (ADR-002), and `categories.status` already has a `DEFERRED` value.
+- Decision: Seed all six rows. `math`, `logic` and `science` get `status = 'LAUNCH'`; `memory`, `language` and `history` get `'DEFERRED'`. `GET /api/categories` returns only LAUNCH rows.
+- Consequences: Adding `memory` in Alpha is a status change, not a new row with a new id, so nothing that referenced it needs to move. Deferred categories are never shown to a learner.
+
+## ADR-037: `question_type` ships with MVP values only
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §8.1 says `mcq` and `numeric` are MVP; `order` and `match` are Alpha.
+- Decision: The `question_type` enum is created with `MCQ` and `NUMERIC` only. Alpha adds the other two with `ALTER TYPE … ADD VALUE`.
+- Consequences: Adding an enum value is non-destructive, so §14.4's ban on destructive production migrations is satisfied without pre-declaring types no code can handle.
+
+## ADR-038: Tailwind v4 with tokens in `globals.css` (clarifies ADR-021)
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: ADR-021 names `tailwind.config` as part of the single theme file, but Tailwind v4 is CSS-first and normally has no config file at all. Splitting tokens across two files would give the Stitch pass two places to edit, which is exactly what ADR-021 exists to prevent.
+- Decision: Tailwind v4. Every design token lives in `apps/web/app/globals.css` under `@theme`, with dark-mode overrides in the same file. `tailwind.config.ts` is retained for content globbing and plugins only and defines no tokens. Confirmed with the product owner before implementation.
+- Consequences: "One theme file" is literally true. A future Stitch pass edits `globals.css` and nothing else.
+
+## ADR-039: The dev seed includes fixture learning histories
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 0
+- Context: §13.6 requires fixture users with scripted learning histories covering a strong category, a low-skill weak category, a never-played category and a stale category. Those rows live in `game_sessions`, `answers`, `learning_events`, `skill_profiles` and `skill_updates`, whose write paths are built in Phases 1 to 3.
+- Decision: Seed them now as deterministic data. No Phase 1 or Phase 3 _code_ is written — the seed inserts rows directly, computing the §11.3 Elo chain so `skill_profiles.rating` equals the last `skill_updates.rating_after`. Sessions are marked `post_processed_at`, and `skill_updates` rows exist, so Phase 3's `coach/process-session` job will correctly skip them rather than double-applying the events. Confirmed with the product owner before implementation.
+- Consequences: §13.6 is satisfied in full and Phase 3 has ready-made fixtures for weak-category detection, recommendations and multipliers. The seed encodes the Elo formula a second time, which the Phase 3 unit tests must be checked against when `coach/` lands.
+
+## ADR-040: `/next` on a fully-resolved session returns `INVALID_SESSION_STATE`
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 1
+- Context: §16.2 defines `/next` as "serve next question", but names no outcome for the case where every question already has an answer. The client should never reach it — `/answer` returns `sessionFinished: true`, which points at `/complete` — but a reload or a stale tab can.
+- Decision: `409 INVALID_SESSION_STATE` with `details.sessionFinished = true`. The client treats that flag as "go to results" rather than as an error.
+- Consequences: No new error code, and the distinguishing information is in `details` where §16.1 already puts `ACTIVE_SESSION_EXISTS`'s session id. `useQuizSession` branches on the flag and shows the finish button.
+
+## ADR-041: `/abandon` works only from `ACTIVE`; `CREATED` sessions are cancelled
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 1
+- Context: §8.1 says the client offers "Resume or Abandon" for an open session, but §15.1 has no `CREATED → ABANDONED` edge — a session with nothing served goes to `CANCELLED`. Taken literally the two read as a contradiction.
+- Decision: Keep the state machine literal. `/abandon` accepts only `ACTIVE`; `/cancel` accepts only `CREATED`. So the client can pick correctly, `409 ACTIVE_SESSION_EXISTS` carries `details.status` alongside `details.sessionId`, and `ActiveSessionPrompt` labels the button "Abandon" or "Cancel" from it.
+- Consequences: The §15.1 table stays the single source of truth for legality and needs no new edge. The cost is one extra field in an error envelope.
+
+## ADR-042: Every terminal transition sends `session/terminal`, including `CANCELLED`
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 1
+- Context: §18.3 says the event is sent after completion "and … after `ABANDONED`/`EXPIRED`", omitting `CANCELLED`. But `sessions/reconcile` selects terminal sessions with `post_processed_at IS NULL`, so a cancelled session that never gets an event would match that query forever and be re-sent every hour for the life of the database.
+- Decision: Send `session/terminal` on every terminal transition — `COMPLETED`, `ABANDONED`, `EXPIRED` and `CANCELLED`.
+- Consequences: The reconcile query has a terminating condition for every row it can select. A cancelled session has no learning events, so its consumer does nothing beyond stamping the column.
+
+## ADR-043: Phase 1 ships `sessions/mark-post-processed`
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 1
+- Context: §18.3 makes `coach/process-session` the consumer that sets `post_processed_at`, but that job is Phase 3. Until it exists nothing clears the flag, so the `sessions/reconcile` job §24 Phase 1 asks for would re-send for every terminal session, every hour, indefinitely. Building the reconcile job without a consumer would mean shipping a known defect.
+- Decision: Add a minimal `sessions/mark-post-processed` consumer of `session/terminal` that only stamps the column. It performs none of the Coach's work.
+- Consequences: The reconcile loop terminates from Phase 1. **Phase 3 must not treat `post_processed_at` as its idempotency guard** — §18.1 already specifies `skill_updates.learning_event_id UNIQUE` for that, so `coach/process-session` can safely re-process Phase 1 and Phase 2 sessions to backfill Elo updates. Phase 3 will need to re-send `session/terminal` for sessions whose learning events lack `skill_updates` rows.
+
+## ADR-044: Rate limits are deferred to launch hardening
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 1
+- Context: §19.2 specifies limits for session creation (30/hour) and answer submission (5/second) using Upstash Ratelimit. Upstash is not installed (ADR-035), Phase 1's scope line does not mention limits, and no phase's acceptance criteria require them before Phase 11's "launch hardening".
+- Decision: Not implemented in Phase 1. They arrive with the phase that installs Upstash Redis, together with the §19.2 fail-open/fail-closed behaviour.
+- Consequences: Phase 1 has no protection against a client hammering `/answer`. The database constraints still prevent duplicate answers and duplicate awards, so the exposure is load, not correctness. This must be closed before public launch (§28).
+
+## ADR-045: `response` is `{optionId}` for MCQ and `{value}` for NUMERIC
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 1
+- Context: §16.2 gives `/answer` a `response` field but does not define its shape, and §8.1 describes numeric normalisation without saying what arrives on the wire.
+- Decision: MCQ sends `{ optionId: string }`; NUMERIC sends `{ value: string }` carrying the learner's raw, un-normalised text. A response whose shape does not fit the question's type is `400 INVALID_INPUT` — a client bug. Text that does not parse as a number grades **0**: that is a wrong answer, not a malformed request.
+- Consequences: Normalisation (trim, strip thousands separators, parse as decimal) happens server-side where §8.1 puts it, so the client cannot influence grading by pre-formatting. Sending the raw string also keeps the learner's literal input in `answers.response_json` for the review screen.
+
+## ADR-046: Insufficient content in a category is a `404 NOT_FOUND`
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 1
+- Context: §11.6 requires ten questions per session and §16.1 has no code for "this category cannot currently be played". The seed guarantees 15 per launch category and §13.6 requires ≥12, so this is an operational fault rather than a user error.
+- Decision: `404 NOT_FOUND` with `details.reason = 'INSUFFICIENT_QUESTIONS'` and the available count, logged at error level as `session.insufficient_questions`.
+- Consequences: A content gap fails loudly in the logs and cleanly for the learner, rather than silently serving a short quiz — which would corrupt the §10 scoring assumptions and the §6 qualifying-session definition.
+
+## ADR-047: Question positions are 0-based
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 1
+- Context: `session_questions.position` is a `smallint` with no stated base, and `/answer` takes a `position`.
+- Decision: 0-based throughout the database and the API, matching array indexing and the Phase 0 dev seed. The UI displays `position + 1` ("Question 1 of 10").
+- Consequences: One convention everywhere below the presentation layer. The only place the two differ is a single `+ 1` in `QuizProgress` and the review list.
+
+## ADR-048: History is completed sessions only, paged by session id
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 1
+- Context: §16.2 describes `GET /api/me/history?cursor=` as "completed sessions with points" without defining the cursor.
+- Decision: `status = 'COMPLETED'` only — abandoned and expired sessions earn no points and have no results page. Twenty per page, keyset-paged on the session id descending.
+- Consequences: Because ids are UUID v7 (§14.1, ADR-028) they sort by creation time, so ordering by id is ordering by recency and the Phase 0 `game_sessions_owner_history_idx` covers the query. No new column, no offset pagination, and no skipped or repeated row when a session is completed mid-page.
+
+## ADR-049: Session orchestration lives in `apps/web/lib/sessions/`
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 1
+- Context: The §18.2 completion transaction is neither pure domain logic nor plain data access, so §21.2 does not obviously assign it a home.
+- Decision: `apps/web/lib/sessions/`. §21.2 gives `apps/web` "route handlers + Inngest functions", `packages/core` the pure logic and `packages/db` the repositories, and this orchestration is what route handlers and jobs call.
+- Consequences: `computePoints`, grading and selection stay pure and unit-tested in `packages/core`; all I/O stays in `packages/db`. Multiplayer writes a different transaction (§17.5), so this is not an architectural dead end for Phase 8.
+
+## ADR-050: The `route()` wrapper validates dynamic params
+
+- Status: Accepted
+- Date: 2026-09-29
+- Phase: 1
+- Context: Phase 0's wrapper took only a `Request`, but Next.js passes dynamic segments in a second argument whose `params` is a promise, and every `/api/sessions/:id/*` route needs it.
+- Decision: `route()` accepts Next's second argument and takes an optional `params` Zod schema, exposing the parsed result on the handler context alongside the body and the query string. A segment that fails validation returns `404 NOT_FOUND`, not `400`: a non-UUID session id can only ever address a session that does not exist.
+- Consequences: Handlers never touch `context.params` directly or await it themselves. The three Phase 0 routes are unaffected — the new argument is optional.

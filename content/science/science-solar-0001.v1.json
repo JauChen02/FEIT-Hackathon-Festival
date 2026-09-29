@@ -1,0 +1,37 @@
+{
+  "externalId": "science-solar-0001",
+  "versionNumber": 1,
+  "category": "science",
+  "subTopic": "astronomy",
+  "type": "MCQ",
+  "difficulty": 1,
+  "prompt": "Which planet is closest to the Sun?",
+  "options": [
+    {
+      "id": "a",
+      "text": "Venus"
+    },
+    {
+      "id": "b",
+      "text": "Mercury"
+    },
+    {
+      "id": "c",
+      "text": "Earth"
+    },
+    {
+      "id": "d",
+      "text": "Mars"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "Mercury orbits closest, at about 58 million kilometres. Venus is second and is hotter, because its thick carbon dioxide atmosphere traps heat.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}

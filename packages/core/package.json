@@ -1,0 +1,28 @@
+{
+  "name": "@learnarena/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src tests",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run"
+  },
+  "dependencies": {
+    "decimal.js": "^10.6.0",
+    "seedrandom": "^3.0.5",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.8",
+    "@types/seedrandom": "^3.0.8",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

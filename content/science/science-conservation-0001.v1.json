@@ -1,0 +1,37 @@
+{
+  "externalId": "science-conservation-0001",
+  "versionNumber": 1,
+  "category": "science",
+  "subTopic": "chemistry",
+  "type": "MCQ",
+  "difficulty": 4,
+  "prompt": "Why does a sealed flask of reacting chemicals keep the same total mass?",
+  "options": [
+    {
+      "id": "a",
+      "text": "Atoms are destroyed and recreated"
+    },
+    {
+      "id": "b",
+      "text": "Atoms are rearranged, not created or destroyed"
+    },
+    {
+      "id": "c",
+      "text": "Gases have no mass"
+    },
+    {
+      "id": "d",
+      "text": "The reaction is too slow to measure"
+    }
+  ],
+  "answer": {
+    "correctOptionId": "b"
+  },
+  "explanation": "Conservation of mass: a chemical reaction rearranges existing atoms into new bonds. An unsealed flask can appear to lose mass only because gas escapes.",
+  "origin": "DEV_SEED",
+  "source": "Authored for the LearnArena development seed",
+  "license": "internal",
+  "authorUsername": "seed_author",
+  "reviewedByUsername": "seed_reviewer",
+  "reviewedAt": "2026-09-20T00:00:00Z"
+}
