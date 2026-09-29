@@ -3,13 +3,13 @@ import { RECONCILE_GRACE_MS, SESSION_INACTIVITY_TIMEOUT_MS, systemClock } from '
 import {
   listStaleOpenSessions,
   listUnprocessedTerminalSessions,
-  markPostProcessed,
   transitionSession,
 } from '@learnarena/db';
 import { db } from '../../db';
 import { logger } from '../../logger';
 import { sendSessionTerminal } from '../events';
-import { SESSION_TERMINAL_EVENT, inngest, type SessionTerminalEvent } from '../client';
+import { releaseRecommendation } from '../../sessions/releaseRecommendation';
+import { inngest } from '../client';
 
 /**
  * Session background jobs (PLANNING.md §15.1, §18.3).
@@ -46,9 +46,11 @@ export async function runExpireStaleSessions(at: Date = systemClock.now()): Prom
 
     expired += 1;
     logger.info({ session_id: session.id, from: session.status }, 'session.expired_by_sweep');
+    // §11.5: an expired session does not consume today's recommendation.
+    await releaseRecommendation(session);
     // §8.2: served-but-unanswered questions produce no learning event on
     // expiry, so there is nothing to resolve — only the event to fan out.
-    await sendSessionTerminal(session.id);
+    await sendSessionTerminal(session.id, session.ownerId);
   }
 
   return { scanned: stale.length, expired };
@@ -83,7 +85,7 @@ export async function runReconcileSessions(at: Date = systemClock.now()): Promis
 
   for (const session of pending) {
     logger.warn({ session_id: session.id }, 'session.post_processing_missing — re-sending');
-    await sendSessionTerminal(session.id);
+    await sendSessionTerminal(session.id, session.ownerId);
   }
 
   return { resent: pending.length };
@@ -100,40 +102,10 @@ export const reconcileSessions = inngest.createFunction(
   async ({ step }) => step.run('reconcile', () => runReconcileSessions()),
 );
 
-// ---------------------------------------------------------------------------
-// sessions/mark-post-processed
-// ---------------------------------------------------------------------------
-
 /**
- * Consumes `session/terminal` and stamps `post_processed_at`.
- *
- * Without a consumer, nothing clears the condition `sessions/reconcile` looks
- * for, and it would re-send for every terminal session every hour, forever.
- * This job does none of the Coach's work — Phase 3's `coach/process-session`
- * is what applies Elo updates (§18.3).
- *
- * Phase 3 can safely re-process anything this marked: its idempotency guard is
- * `skill_updates.learning_event_id UNIQUE` (§18.1), not this column (ADR-043).
+ * Phase 1's `sessions/mark-post-processed` lived here. It existed only so the
+ * reconcile loop had a terminating condition before the Coach existed
+ * (ADR-043); `coach/process-session` now stamps `post_processed_at` itself, so
+ * the stub is gone.
  */
-export async function runMarkPostProcessed(
-  sessionId: string,
-  at: Date = systemClock.now(),
-): Promise<void> {
-  await markPostProcessed(db(), sessionId, at);
-  logger.debug({ session_id: sessionId }, 'session.post_processed');
-}
-
-export const markSessionPostProcessed = inngest.createFunction(
-  {
-    id: 'sessions-mark-post-processed',
-    name: 'sessions/mark-post-processed',
-    retries: 3,
-    triggers: [{ event: SESSION_TERMINAL_EVENT }],
-  },
-  async ({ event, step }) => {
-    const { sessionId } = event.data as SessionTerminalEvent['data'];
-    return step.run('mark', () => runMarkPostProcessed(sessionId));
-  },
-);
-
-export const sessionFunctions = [expireStaleSessions, reconcileSessions, markSessionPostProcessed];
+export const sessionFunctions = [expireStaleSessions, reconcileSessions];

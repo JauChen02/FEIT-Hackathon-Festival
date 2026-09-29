@@ -12,6 +12,7 @@
  */
 
 import postgres from 'postgres';
+import type { Clock } from '@learnarena/core';
 import { runMigrations, seedDatabase, createDatabase, type Database } from '@learnarena/db';
 import { setSessionResolver } from '@/lib/auth/session';
 
@@ -34,7 +35,21 @@ function adminUrl(base: string): string {
  * Create a throwaway database, point the app at it, and seed the taxonomy and
  * content users that the routes read.
  */
-export async function createWebTestContext(name: string): Promise<WebTestContext> {
+export interface WebTestContextOptions {
+  /**
+   * Seed the §13.6 fixture users and their scripted learning histories.
+   * Off by default: most suites build the exact data they need, and the
+   * histories are slow to write. `fixtures.test.ts` turns it on.
+   */
+  fixtureHistories?: boolean;
+  /** Pin the clock the seed uses, so event recency is deterministic. */
+  clock?: Clock;
+}
+
+export async function createWebTestContext(
+  name: string,
+  options: WebTestContextOptions = {},
+): Promise<WebTestContext> {
   const baseUrl = process.env.DATABASE_URL;
   if (!baseUrl) throw new Error('DATABASE_URL is not set; see .env.example.');
 
@@ -59,7 +74,10 @@ export async function createWebTestContext(name: string): Promise<WebTestContext
   await runMigrations(handle.db);
   // The real dev seed: taxonomy, content users and the 45 published questions,
   // so `GET /api/categories` returns the same counts the app would show.
-  await seedDatabase(handle.db, { skipFixtureHistories: true });
+  await seedDatabase(handle.db, {
+    skipFixtureHistories: options.fixtureHistories !== true,
+    ...(options.clock ? { clock: options.clock } : {}),
+  });
 
   let currentUserId: string | null = null;
   const restoreResolver = setSessionResolver(async () =>

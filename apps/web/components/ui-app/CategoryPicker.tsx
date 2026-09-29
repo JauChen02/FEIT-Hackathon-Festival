@@ -8,8 +8,8 @@ import { ErrorNotice, type ApiError } from './StateBoundary';
  * Category picker (PLANNING.md §20 screen 4, and the category buttons on
  * screen 3).
  *
- * The ×1.25 / ×1.5 focus tags §20 describes need the Coach, so they arrive in
- * Phase 3; this shows the launch categories and their question counts.
+ * Shows the launch categories, their live question counts, and the ×1.25 /
+ * ×1.5 focus tags from §20 screen 4.
  *
  * Presentational (ADR-021): the page owns the POST and passes state down.
  */
@@ -18,6 +18,11 @@ export interface CategoryOption {
   slug: string;
   name: string;
   liveQuestionCount: number;
+  /**
+   * The bonus a session here would carry right now (§11.8). §20 screen 4:
+   * "weak ones show '×1.25 Focus' tag, recommended one '×1.5'".
+   */
+  tier?: 'NONE' | 'WEAK' | 'RECOMMENDED';
 }
 
 export interface CategoryPickerProps {
@@ -53,7 +58,15 @@ export function CategoryPicker({ categories, startingSlug, error, onStart }: Cat
               onClick={() => onStart(category.slug)}
             >
               <span>{category.name}</span>
-              <span className="text-xs text-muted-foreground">
+              <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                {category.tier && category.tier !== 'NONE' ? (
+                  <span
+                    data-testid={`tier-${category.slug}`}
+                    className="rounded-sm bg-secondary px-2 py-0.5 text-secondary-foreground"
+                  >
+                    {category.tier === 'RECOMMENDED' ? '×1.5 Focus' : '×1.25 Focus'}
+                  </span>
+                ) : null}
                 {startingSlug === category.slug
                   ? 'Starting…'
                   : `${category.liveQuestionCount} questions`}

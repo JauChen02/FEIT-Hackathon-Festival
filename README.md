@@ -9,10 +9,15 @@ learner's weak areas and rewards them for working on those areas.
   source of truth.
 - **[DECISIONS.md](DECISIONS.md)** — architectural decision records.
 
-**Current stage: Phase 1 complete.** Sign-in, onboarding, the full MVP schema,
-the content pipeline and the dev seed (Phase 0); plus the solo quiz loop, the
-points ledger and the results review (Phase 1). Streaks arrive in Phase 2 and
-the Coach in Phase 3.
+**Current stage: Phases 0, 1 and 3 complete.** Sign-in, onboarding, the full
+MVP schema, the content pipeline and the dev seed (Phase 0); the solo quiz loop,
+the points ledger and the results review (Phase 1); and the deterministic Coach
+— Elo skill ratings, weak-category detection, the daily recommendation, the
+×1.25/×1.5 focus bonuses and the Skills page (Phase 3).
+
+**Phase 2 (Streaks & Freezes) is not built.** The streak multiplier is
+therefore pinned at 1.0 everywhere, and the §3.1 MVP release gate cannot be met
+until it lands.
 
 ## Getting started
 
@@ -32,9 +37,12 @@ pnpm dev                     # http://localhost:3000
 # Optional, in a second terminal: the Inngest dev server, so the background
 # jobs actually run. Without it, `session/terminal` sends fail and are logged —
 # which is the designed behaviour (§23.4: sessions/reconcile retries), but it
-# does mean an error line per completed quiz.
+# does mean an error line per completed quiz, and skill ratings never move.
 npx inngest-cli@latest dev -u http://localhost:3000/api/inngest
 ```
+
+If you would rather not run Inngest locally, `pnpm admin:process-skills` applies
+the Coach to every session still waiting for it (ADR-052).
 
 Sign in at `/sign-in` with any email address; the local stack captures the
 magic link at <http://127.0.0.1:54324> (Mailpit) instead of sending it.
@@ -66,6 +74,13 @@ wall-clock time and uses no unseeded randomness (PLANNING.md §29).
 | `pnpm db:seed`        | Seed taxonomy, content users, questions and fixture users                    |
 | `pnpm db:reset`       | Drop, re-migrate, re-seed (local/test only)                                  |
 | `pnpm content:import` | Publish `content/` — idempotent, refuses edits to published versions         |
+
+Two admin commands, run from `apps/web`:
+
+| Command                      | What it does                                                        |
+| ---------------------------- | ------------------------------------------------------------------- |
+| `pnpm admin:process-skills`  | Apply the Coach in-process to sessions Inngest has not processed    |
+| `pnpm admin:backfill-skills` | Re-send `session/terminal` for pre-Phase-3 sessions (needs Inngest) |
 
 Integration and E2E tests need the Supabase stack running. They create and drop
 their own throwaway databases, so they never touch your development data.

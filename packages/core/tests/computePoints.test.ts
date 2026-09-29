@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { COMPLETION_BONUS } from '../src/domain';
+import { evaluateImprovement } from '../src/coach/improvement';
+import { resolveTier, tierMultiplier } from '../src/coach/tier';
 import { NEUTRAL_MULTIPLIERS, computePoints } from '../src/scoring/computePoints';
 import type { ComputePointsInput, QuestionOutcome } from '../src/scoring/types';
 
@@ -369,5 +371,99 @@ describe('the breakdown is reproducible (§10.4)', () => {
   it('survives a JSON round-trip, because it is stored as jsonb', () => {
     const result = computePoints(input({ questions: ten(1, 0.75) }));
     expect(JSON.parse(JSON.stringify(result))).toEqual(result);
+  });
+});
+
+describe('the weakness multiplier, wired end to end (§10.1, §11.7, §11.8)', () => {
+  /** A fixed, easily-checked session: all correct, full speed. */
+  const session = () => input({ questions: ten(1, 1) });
+
+  it.each([
+    ['NONE', 1, 1275],
+    ['WEAK', 1.25, 1594],
+    ['RECOMMENDED', 1.5, 1913],
+    ['RECOMMENDED + improvement', 1.75, 2231],
+  ])('a %s session scores %d× → %d points', (_label, weakness, expected) => {
+    const result = computePoints({
+      ...session(),
+      multipliers: { ...NEUTRAL_MULTIPLIERS, weakness },
+    });
+    expect(result.multipliers.weakness).toBe(weakness);
+    expect(result.finalPoints).toBe(expected);
+  });
+
+  it('is the only multiplier that moved, so the ratios are exact', () => {
+    const points = (weakness: number) =>
+      computePoints({ ...session(), multipliers: { ...NEUTRAL_MULTIPLIERS, weakness } })
+        .finalPoints;
+
+    // 1275 is the neutral total; each tier scales it and rounds once (§10.2).
+    expect(points(1.25)).toBe(Math.round(points(1) * 1.25));
+    expect(points(1.5)).toBe(Math.round(points(1) * 1.5));
+    expect(points(1.75)).toBe(Math.round(points(1) * 1.75));
+  });
+
+  it('takes the multiplier the Coach resolved, not the one snapshotted', () => {
+    // §11.8: a RECOMMENDED snapshot whose recommendation was already spent
+    // falls back to WEAK, and the scorer must be given the resolved value.
+    const resolved = resolveTier({
+      snapshotTier: 'RECOMMENDED',
+      wasWeakAtCreation: true,
+      recommendationEligible: false,
+      isQualifying: true,
+    });
+    expect(resolved.multiplier).toBe(1.25);
+
+    const result = computePoints({
+      ...session(),
+      multipliers: { ...NEUTRAL_MULTIPLIERS, weakness: resolved.multiplier },
+    });
+    // 1594, not the 1913 the RECOMMENDED snapshot would have paid.
+    expect(result.finalPoints).toBe(1594);
+  });
+
+  it('adds the §11.7 improvement bonus on top of the tier', () => {
+    const improvement = evaluateImprovement({
+      sessionAccuracy: 0.8,
+      priorAccuracies: [0.7, 0.6, 0.7, 0.7, 0.7], // baseline 0.68, +0.12 ≥ +0.10
+    });
+    expect(improvement.bonus).toBe(0.25);
+
+    const tier = tierMultiplier('RECOMMENDED');
+    const result = computePoints({
+      ...session(),
+      multipliers: { ...NEUTRAL_MULTIPLIERS, weakness: tier + improvement.bonus },
+    });
+
+    expect(result.multipliers.weakness).toBe(1.75);
+    expect(result.finalPoints).toBe(2231);
+  });
+
+  it('withholds the improvement bonus without enough history', () => {
+    const improvement = evaluateImprovement({
+      sessionAccuracy: 1,
+      priorAccuracies: [0.1, 0.1], // only 2 prior qualifying sessions
+    });
+    expect(improvement.reason).toBe('insufficient_history');
+
+    const result = computePoints({
+      ...session(),
+      multipliers: {
+        ...NEUTRAL_MULTIPLIERS,
+        weakness: tierMultiplier('WEAK') + improvement.bonus,
+      },
+    });
+    expect(result.multipliers.weakness).toBe(1.25);
+    expect(result.finalPoints).toBe(1594);
+  });
+
+  it('never lets the weakness multiplier alone breach the 4× cap', () => {
+    // The largest weakness multiplier the Coach can produce is 1.75, well
+    // inside the cap — so a capped session always implicates another term.
+    const result = computePoints({
+      ...session(),
+      multipliers: { ...NEUTRAL_MULTIPLIERS, weakness: 1.75 },
+    });
+    expect(result.capApplied).toBe(false);
   });
 });

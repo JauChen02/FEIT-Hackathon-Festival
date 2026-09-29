@@ -13,7 +13,12 @@ export const SESSION_TERMINAL_EVENT = 'session/terminal';
 
 export interface SessionTerminalEvent {
   name: typeof SESSION_TERMINAL_EVENT;
-  data: { sessionId: string };
+  /**
+   * `userId` is carried so `coach/process-session` can use it as its
+   * concurrency key (§18.3) — Inngest routes on the event, so the key cannot
+   * be looked up inside the job.
+   */
+  data: { sessionId: string; userId: string };
 }
 
 export const inngest = new Inngest({

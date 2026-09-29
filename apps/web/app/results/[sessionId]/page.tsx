@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MissedQuestionReview } from '@/components/ui-app/MissedQuestionReview';
 import { PointsBreakdownCard } from '@/components/ui-app/PointsBreakdownCard';
+import { SkillDeltasClient } from './SkillDeltasClient';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
 
@@ -47,6 +48,14 @@ export default async function ResultsPage({ params }: { params: Promise<{ sessio
               finalPoints={result.finalPoints}
             />
 
+            {/*
+              §18.3 runs the Coach job *after* the completion transaction
+              commits, so the deltas are usually not ready when this page first
+              renders. The client polls briefly rather than blocking the
+              results behind them (§20 screen 6).
+            */}
+            <SkillDeltasClient sessionId={sessionId} />
+
             <MissedQuestionReview
               review={result.review}
               questionCount={result.questionCount}
@@ -72,6 +81,9 @@ export default async function ResultsPage({ params }: { params: Promise<{ sessio
         <div className="flex gap-2">
           <Button asChild data-testid="back-home">
             <Link href="/home">Back to home</Link>
+          </Button>
+          <Button asChild variant="outline" data-testid="view-skills">
+            <Link href="/skills">Skills</Link>
           </Button>
           <Button asChild variant="outline" data-testid="view-history">
             <Link href="/history">History</Link>

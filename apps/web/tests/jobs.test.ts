@@ -19,11 +19,10 @@ import {
 } from '@learnarena/core';
 import { answers, gameSessions, learningEvents } from '@learnarena/db/schema';
 import { POST as onboardingRoute } from '@/app/api/me/onboarding/route';
-import {
-  runExpireStaleSessions,
-  runMarkPostProcessed,
-  runReconcileSessions,
-} from '@/lib/inngest/functions/sessionJobs';
+import { runExpireStaleSessions, runReconcileSessions } from '@/lib/inngest/functions/sessionJobs';
+// Phase 3 replaced `sessions/mark-post-processed` with the Coach job, which
+// stamps `post_processed_at` itself (ADR-043, ADR-051).
+import { runProcessSession } from '@/lib/inngest/functions/coachJobs';
 import { setSessionClock } from '@/lib/sessions/context';
 import { clearGameTypeCache } from '@/lib/sessions/gameTypes';
 import { clearCategoryCache } from '@/lib/sessions/categories';
@@ -41,11 +40,13 @@ let clock: FixedClock;
 let restoreClock: () => void;
 let restoreTransport: () => void;
 let terminalEvents: string[];
+let currentUserId: string;
 
 const START = '2026-09-29T12:00:00.000Z';
 
 async function signUpFresh(username: string): Promise<void> {
-  ctx.signInAs(uuidv7());
+  currentUserId = uuidv7();
+  ctx.signInAs(currentUserId);
   await onboardingRoute(
     jsonRequest('/api/me/onboarding', { method: 'POST', body: onboardingBody({ username }) }),
   );
@@ -221,7 +222,7 @@ describe('sessions/reconcile (§18.3)', () => {
     await complete(created.body.sessionId);
 
     // This is what the session/terminal consumer does.
-    await runMarkPostProcessed(created.body.sessionId, clock.now());
+    await runProcessSession(created.body.sessionId, currentUserId, clock.now());
     terminalEvents = [];
 
     const later = new Date(new Date(START).getTime() + RECONCILE_GRACE_MS + 1_000);
@@ -248,21 +249,21 @@ describe('sessions/reconcile (§18.3)', () => {
     expect(terminalEvents).toContain(created.body.sessionId);
 
     // And once marked, it stops.
-    await runMarkPostProcessed(created.body.sessionId, later);
+    await runProcessSession(created.body.sessionId, currentUserId, later);
     terminalEvents = [];
     await runReconcileSessions(later);
     expect(terminalEvents).not.toContain(created.body.sessionId);
   });
 });
 
-describe('sessions/mark-post-processed (ADR-043)', () => {
+describe('coach/process-session stamps post_processed_at (ADR-051)', () => {
   it('stamps post_processed_at', async () => {
     await signUpFresh('mark_1');
     const created = await createSession('math');
     await playAllQuestions(ctx.db, created.body.sessionId);
     await complete(created.body.sessionId);
 
-    await runMarkPostProcessed(created.body.sessionId, clock.now());
+    await runProcessSession(created.body.sessionId, currentUserId, clock.now());
 
     const row = await ctx.db.query.gameSessions.findFirst({
       where: (table, { eq: equals }) => equals(table.id, created.body.sessionId),
@@ -277,8 +278,12 @@ describe('sessions/mark-post-processed (ADR-043)', () => {
     await complete(created.body.sessionId);
 
     const first = clock.now();
-    await runMarkPostProcessed(created.body.sessionId, first);
-    await runMarkPostProcessed(created.body.sessionId, new Date(first.getTime() + 60_000));
+    await runProcessSession(created.body.sessionId, currentUserId, first);
+    await runProcessSession(
+      created.body.sessionId,
+      currentUserId,
+      new Date(first.getTime() + 60_000),
+    );
 
     const row = await ctx.db.query.gameSessions.findFirst({
       where: (table, { eq: equals }) => equals(table.id, created.body.sessionId),

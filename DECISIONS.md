@@ -423,3 +423,102 @@ Format and rules: see PLANNING.md Appendix B. Append new ADRs at the bottom; nev
 - Context: Phase 0's wrapper took only a `Request`, but Next.js passes dynamic segments in a second argument whose `params` is a promise, and every `/api/sessions/:id/*` route needs it.
 - Decision: `route()` accepts Next's second argument and takes an optional `params` Zod schema, exposing the parsed result on the handler context alongside the body and the query string. A segment that fails validation returns `404 NOT_FOUND`, not `400`: a non-UUID session id can only ever address a session that does not exist.
 - Consequences: Handlers never touch `context.params` directly or await it themselves. The three Phase 0 routes are unaffected — the new argument is optional.
+
+## ADR-051: `coach/process-session` replaces the Phase 1 stub, with a backfill
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 3
+- Context: ADR-043 shipped `sessions/mark-post-processed` as a stub that stamped `post_processed_at` and applied no Elo. Phase 3's real consumer is `coach/process-session`. Sessions played in between have learning events and no `skill_updates` rows, and because the stub already stamped them, nothing would ever revisit them.
+- Decision: Delete the stub and replace it with `coach/process-session` on the same `session/terminal` trigger. Add `pnpm admin:backfill-skills`, which finds sessions whose learning events have no `skill_updates` row and re-sends `session/terminal` for each.
+- Consequences: One consumer, not two, so there is no ordering question between them. The backfill is safe to run repeatedly because `skill_updates.learning_event_id` is UNIQUE (§18.1) — an event that was already applied is skipped rather than double-counted. Pre-Phase-3 sessions contribute to ratings only once someone runs the command; it is not automatic, because re-rating historical play is a decision, not a migration.
+
+## ADR-052: `pnpm admin:process-skills` drains the Coach in-process
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 3
+- Context: §23.4 covers a lost `session/terminal` with `sessions/reconcile`, which re-sends the event. That is the right answer when Inngest is delivering but an individual send was lost. It is no answer at all when nothing is _consuming_ — a local environment with no Inngest dev server, or an outage — because re-sending into an unread queue changes nothing, and ratings silently stop moving while the app looks healthy.
+- Decision: Add `runDrainPendingSessions()` and expose it as `pnpm admin:process-skills`. It runs the same `runProcessSession` the job runs, over the same "events with no skill update" query, sequentially.
+- Consequences: There is a recovery path that does not depend on Inngest. It relies on the same idempotency guards as the job, so it is safe to run repeatedly and safe to run while Inngest is healthy. It also lets the Playwright suite exercise the real Coach without booting an Inngest dev server: `e2e/helpers/coach.ts` calls it in the runtime's place, so the E2E assertions read output produced by production code rather than by a mock. Draining is sequential rather than parallel, because the per-user concurrency key is what makes the Elo chain deterministic and a manual drain must not be the thing that breaks it.
+
+## ADR-053: A strength must sit above the starting rating
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 3
+- Context: §11.4 defines strengths as "top 2 by `proficiency × confidence` with `confidence ≥ 0.3`". The confidence gate stops a lucky first session being called a strength, but nothing stops a _confidently bad_ category being called one. The `fx_weak` fixture found this: it has played only logic, at 30% accuracy, reaching 39 proficiency with 0.63 confidence — clearing the gate as the only eligible category, and being shown to the learner as "Strongest: logic". §20 screen 7 puts that string in front of the user.
+- Decision: Add `proficiency > 50` as a second gate. 50 is the proficiency of the 1000 starting rating (§11.3, §11.4), so this asks only that a strength be something the learner has actually demonstrated rather than merely been measured at.
+- Consequences: A learner with no category above the starting rating is shown an empty strengths list and the "play more and your strengths will show up" copy, which is true, instead of a misleading label. Weakness scoring, recommendations and every multiplier are untouched — this changes one read-time display rule. The threshold is a named constant, `STRENGTH_MIN_PROFICIENCY`, so a later tuning pass has one place to look.
+
+## ADR-054: `session/terminal` carries `userId` so Inngest can route on it
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 3
+- Context: §18.3 requires `coach/process-session` to run with "concurrency key = user_id". Inngest evaluates a concurrency key against the event payload, and the Phase 1 event carried only `sessionId`.
+- Decision: Widen the payload to `{ sessionId, userId }` and set `concurrency: { key: 'event.data.userId', limit: 1 }`.
+- Consequences: One learner's sessions are processed serially, so two sessions finishing together cannot both read the same `rating_before` and have one overwrite the other. Serialising per user rather than globally keeps throughput. The event id stays derived from the session id alone, so deduplication is unaffected and a reconcile re-send still collapses onto the original delivery.
+
+## ADR-055: Exploration draws its randomness from one hash
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 3
+- Context: §11.5 step 2 explores with probability 0.1 "seeded by `hash(user_id, local_date)`", and when it fires it must also choose _which_ alternative to take. The spec names one seed for what are two decisions.
+- Decision: Take a single SHA-256 of `learnarena:recommendation:{userId}:{localDate}` and read both values from it: the first 8 hex digits divided by 2^32 give `r ∈ [0,1)`, the next 8 taken modulo `n` give the uniform pick. The full digest is stored in `reason_json.exploration.seed`.
+- Consequences: One hash, one stored seed, and the whole choice is reproducible from `(user_id, local_date)` alone — which is what makes lazy generation safe to race and `reason_json` genuinely explanatory. Deriving the pick from a second hash would have been equally valid but would have meant storing two seeds to stay auditable.
+
+## ADR-056: Exploration picks only among other weak categories
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 3
+- Context: §11.5 step 2 says to explore "if more than one category is over the threshold", without saying what the alternative is drawn from.
+- Decision: Draw uniformly from the weak categories other than the top-ranked one. When there is no such alternative, exploration cannot fire at all, whatever `r` is.
+- Consequences: Exploration varies the learner's focus without ever recommending a category they are already strong at, which would waste the ×1.5. The condition in the spec and the pool being drawn from are the same set, so the rule is self-consistent.
+
+## ADR-057: Prior qualifying sessions are the same category, completed, qualifying
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 3
+- Context: §11.7 needs "at least 3 prior qualifying sessions" and a baseline over "the most recent 5", without defining the filter precisely.
+- Decision: `status = 'COMPLETED'` and `is_qualifying` and the same `category_id`, ordered by `ended_at` descending, taking 5. Abandoned and expired sessions are excluded from the baseline and can never trigger the bonus. The threshold comparison uses `≥`, so exactly +0.10 grants it.
+- Consequences: The improvement bonus measures improvement at one subject, which is what §11.7 is for; mixing categories would let a strong subject mask a weak one. A partial index, `game_sessions_improvement_idx`, covers exactly this query.
+
+## ADR-058: The recommendation is claimed through `AVAILABLE → IN_PROGRESS → COMPLETED`
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 3
+- Context: §11.5 requires the ×1.5 to be granted at most once and abandoning not to consume it. The obvious implementation — a guarded `UPDATE … WHERE status IN ('AVAILABLE','IN_PROGRESS')` straight to `COMPLETED` — is illegal: §15.5 has no `AVAILABLE → COMPLETED` edge, and the transition table rejects it.
+- Decision: Walk the two legal edges. Session creation marks the recommendation `IN_PROGRESS`; completion moves `IN_PROGRESS → COMPLETED` and stamps `completed_session_id`. `claimForCompletion` performs the `AVAILABLE → IN_PROGRESS` step first as a no-op-if-already-there, so a session created before the link still claims correctly. Abandoning or expiring releases `IN_PROGRESS → AVAILABLE`.
+- Consequences: Four independent layers make double-granting impossible: the session row lock, `SELECT … FOR UPDATE` on the recommendation, the guarded `UPDATE … WHERE status IN (…)`, and `recommendations.completed_session_id UNIQUE`. The state machine stays the single description of legal movement rather than being bypassed at one call site. ADR-012 (one open solo session) makes two simultaneously-completable sessions from one recommendation unreachable through the API, so the concurrency test races `claimForCompletion` at the repository level instead.
+
+## ADR-059: The radar's opacity tracks mean confidence
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 3
+- Context: §20 screen 7 asks for a radar chart with "one axis per launch category, opacity by confidence". Recharts draws one polygon per series with a single `fillOpacity`; a per-axis opacity needs a custom shape renderer.
+- Decision: The polygon's opacity tracks the mean confidence across categories, floored so a new learner still sees the shape of their profile. Each category's own confidence is shown as a percentage in the list beside the chart.
+- Consequences: No information is lost — per-category confidence is on screen, just not encoded in the fill. ADR-021 defers exactly this kind of custom rendering to the Google Stitch pass, and a custom shape renderer would be thrown away by it.
+
+## ADR-060: Rating history is read from `skill_updates`
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 3
+- Context: §20 screen 7 asks for a per-category rating history. Nothing in §14.2 stores a time series.
+- Decision: Read it from `skill_updates`, which §11.3 already maintains as the audit trail for every rating change, taking the most recent 30 per category with a window function. Proficiency is derived per point at read time.
+- Consequences: The chart is the same data that explains every rating, so it cannot drift from the profile — Invariant 5 gets a user-facing surface rather than a parallel store. No new table, no new write path.
+
+## ADR-061: `GET /api/me/skills` never generates a recommendation
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 3
+- Context: §11.5 generates the daily recommendation lazily on the first read of the local date. `/api/me/skills` reports `recommendedCategorySlug` and each category's tier, so it is also a read of that state.
+- Decision: Only `GET /api/me/recommendation` generates. `/api/me/skills` reports a recommendation that already exists and otherwise reports none, staying a pure read.
+- Consequences: A GET that a learner can trigger by opening the Skills page has no side effects. The cost is an ordering constraint on the client: Home fetches the recommendation first and the skills second, because racing them would leave the picker showing ×1.25 on every category on the first visit of a day. That sequencing is commented at the call site.

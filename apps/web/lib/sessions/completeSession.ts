@@ -29,7 +29,7 @@ import { db } from '../db';
 import { logger } from '../logger';
 import { sendSessionTerminal } from '../inngest/events';
 import { categorySlugForId } from './categories';
-import { NO_OP_COMPLETION_STEPS, type CompletionSteps } from './hooks';
+import { COMPLETION_STEPS, type CompletionSteps } from './hooks';
 import { findExpiredServed, resolveTimeouts } from './resolveTimeout';
 
 /**
@@ -55,7 +55,7 @@ export async function completeSession(
   user: UserRecord,
   sessionId: string,
   at: Date,
-  steps: CompletionSteps = NO_OP_COMPLETION_STEPS,
+  steps: CompletionSteps = COMPLETION_STEPS,
 ): Promise<CompleteSessionResult> {
   // Resolve lapsed questions before opening the transaction. They are separate
   // writes (§8.2) and doing them here keeps the locked section short.
@@ -124,11 +124,12 @@ export async function completeSession(
       now: at,
     };
 
-    // ---- Steps 5, 6, 7: no-op interfaces until Phases 2 and 3 ------------
+    // ---- Steps 5, 6, 7 --------------------------------------------------
+    // Step 5 (streak) is still a no-op: Phase 2 owns it (§12.1).
     const { streakMultiplier, streak } = await steps.streak.apply(stepContext);
-    const { tierMultiplier, recommendationCompleted } =
+    const { tierMultiplier, resolvedTier, recommendationCompleted } =
       await steps.recommendation.resolve(stepContext);
-    const { improvementBonus } = await steps.improvement.evaluate(stepContext);
+    const { improvementBonus, baseline } = await steps.improvement.evaluate(stepContext);
 
     // ---- Step 8: compute and award ---------------------------------------
     const breakdown = computePoints({
@@ -172,6 +173,16 @@ export async function completeSession(
       questions.map((question) => question.questionVersionId),
     );
 
+    // §10.4: the breakdown has to explain *why* the weakness multiplier took
+    // its value, or an award cannot be reconstructed from the ledger alone.
+    const weaknessExplanation = {
+      snapshotTier: session.weaknessTier,
+      resolvedTier,
+      tierMultiplier,
+      improvementBonus,
+      improvementBaseline: baseline,
+    };
+
     const result: SessionResult = {
       sessionId,
       categorySlug: await categorySlugForId(tx, session.categoryId),
@@ -186,6 +197,7 @@ export async function completeSession(
       localDate,
       streak,
       recommendationCompleted,
+      weakness: weaknessExplanation,
       review: buildReview(questions, answers, versions),
     };
 
@@ -215,7 +227,7 @@ export async function completeSession(
   // §18.3: post-commit, after the award is durable. Never throws (see
   // lib/inngest/events.ts); a lost send is recovered by sessions/reconcile.
   if (outcome.awarded) {
-    await sendSessionTerminal(sessionId);
+    await sendSessionTerminal(sessionId, user.id);
   }
 
   return outcome;

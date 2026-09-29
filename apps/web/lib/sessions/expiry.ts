@@ -4,6 +4,7 @@ import { transitionSession, type SessionRecord } from '@learnarena/db';
 import { db } from '../db';
 import { logger } from '../logger';
 import { sendSessionTerminal } from '../inngest/events';
+import { releaseRecommendation } from './releaseRecommendation';
 
 /**
  * Lazy session expiry (PLANNING.md §8.2, §15.1).
@@ -43,7 +44,8 @@ export async function applyLazyExpiry(session: SessionRecord, at: Date): Promise
   }
 
   logger.info({ session_id: session.id, from: session.status }, 'session.expired');
-  await sendSessionTerminal(session.id);
+  await releaseRecommendation(session);
+  await sendSessionTerminal(session.id, session.ownerId);
 
   return { ...session, status: 'EXPIRED', endedAt: at };
 }

@@ -1,16 +1,19 @@
 import 'server-only';
 import { STARTING_USER_RATING } from '@learnarena/core';
+import { findSkillProfile } from '@learnarena/db';
+import { db } from '../db';
 
 /**
  * The learner's Elo rating in a category (PLANNING.md §11.3).
  *
- * §24 Phase 1: "question selection per §11.6 (**using default rating 1000
- * until Phase 3 writes ratings**)".
+ * Phase 1 returned the constant 1000 because nothing wrote ratings yet. Phase 3
+ * fills the seam: `coach/process-session` now maintains `skill_profiles`, and
+ * §11.6 selects questions against this number.
  *
- * This is the single seam Phase 3 replaces with a read of `skill_profiles`.
- * Keeping it a function rather than inlining the constant means the change is
- * one file, and every caller already threads the arguments it will need.
+ * A category with no profile row still uses the §11.3 starting rating, so a
+ * learner's first session in a category targets 853 exactly as before.
  */
-export async function userRatingFor(_userId: string, _categoryId: string): Promise<number> {
-  return STARTING_USER_RATING;
+export async function userRatingFor(userId: string, categoryId: string): Promise<number> {
+  const profile = await findSkillProfile(db(), userId, categoryId);
+  return profile?.rating ?? STARTING_USER_RATING;
 }

@@ -5,6 +5,7 @@
  * are the *contract*; the database row types stay in `packages/db`.
  */
 
+import type { SkillDelta } from './coach';
 import type { PointsBreakdown } from '../scoring/types';
 import type { SessionStatus } from '../transitions/session';
 
@@ -82,8 +83,16 @@ export interface SessionResult {
   localDate: string;
   /** Phase 2 fills this in (§12.1). */
   streak: null;
-  /** Phase 3 fills this in (§11.5). */
+  /** True when this completion consumed today's recommendation (§11.5). */
   recommendationCompleted: boolean;
+  /** Why `weakness_mult` took the value it did (§10.4, §11.7, §11.8). */
+  weakness: {
+    snapshotTier: 'NONE' | 'WEAK' | 'RECOMMENDED';
+    resolvedTier: 'NONE' | 'WEAK' | 'RECOMMENDED';
+    tierMultiplier: number;
+    improvementBonus: number;
+    improvementBaseline: number | null;
+  };
   review: ReviewItem[];
 }
 
@@ -101,8 +110,11 @@ export interface SessionStateResponse {
   };
   /** Present once COMPLETED. */
   result: SessionResult | null;
-  /** Phase 3 populates this once `coach/process-session` has run (§18.3). */
-  skillDeltas: null;
+  /**
+   * Populated once `coach/process-session` has run (§18.3). Null before then,
+   * which is what drives the pending state on the results screen.
+   */
+  skillDeltas: SkillDelta[] | null;
 }
 
 /** `GET /api/me/history` */

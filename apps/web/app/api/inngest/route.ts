@@ -1,5 +1,6 @@
 import { serve } from 'inngest/next';
 import { inngest } from '@/lib/inngest/client';
+import { coachFunctions } from '@/lib/inngest/functions/coachJobs';
 import { sessionFunctions } from '@/lib/inngest/functions/sessionJobs';
 
 /**
@@ -11,5 +12,5 @@ import { sessionFunctions } from '@/lib/inngest/functions/sessionJobs';
  */
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: sessionFunctions,
+  functions: [...sessionFunctions, ...coachFunctions],
 });

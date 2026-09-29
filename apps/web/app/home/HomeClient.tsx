@@ -1,10 +1,17 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { uuidv7, type CreateSessionResponse } from '@learnarena/core';
+import { useEffect, useState } from 'react';
+
+import {
+  uuidv7,
+  type CreateSessionResponse,
+  type RecommendationResponse,
+  type SkillsResponse,
+} from '@learnarena/core';
 import { ActiveSessionPrompt } from '@/components/ui-app/ActiveSessionPrompt';
 import { CategoryPicker, type CategoryOption } from '@/components/ui-app/CategoryPicker';
+import { FocusCard } from '@/components/ui-app/FocusCard';
 import type { ApiError } from '@/components/ui-app/StateBoundary';
 import { apiFetch } from '@/hooks/useApi';
 
@@ -27,7 +34,33 @@ export function HomeClient({ categories }: { categories: readonly CategoryOption
   const [openSession, setOpenSession] = useState<OpenSession | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function start(slug: string) {
+  // §11.5: the recommendation is generated lazily on the first GET of the
+  // learner's local date, so simply loading Home is what creates it.
+  const [recommendation, setRecommendation] = useState<RecommendationResponse | null>(null);
+  const [tiers, setTiers] = useState<Map<string, CategoryOption['tier']>>(new Map());
+
+  useEffect(() => {
+    void (async () => {
+      // Sequential, not parallel: `/api/me/skills` is a pure read that reports
+      // the RECOMMENDED tier only for a recommendation that already exists,
+      // and `/api/me/recommendation` is what lazily creates it (§11.5). Racing
+      // them would leave the picker showing ×1.25 on every category on a
+      // learner's first visit of the day.
+      const recommendationResult = await apiFetch<RecommendationResponse>('/api/me/recommendation');
+      if (recommendationResult.ok) setRecommendation(recommendationResult.data);
+
+      const skillsResult = await apiFetch<SkillsResponse>('/api/me/skills');
+      if (skillsResult.ok) {
+        setTiers(
+          new Map(
+            skillsResult.data.categories.map((category) => [category.categorySlug, category.tier]),
+          ),
+        );
+      }
+    })();
+  }, [setRecommendation, setTiers]);
+
+  async function start(slug: string, recommendationId?: string) {
     setStartingSlug(slug);
     setError(null);
 
@@ -36,7 +69,12 @@ export function HomeClient({ categories }: { categories: readonly CategoryOption
       // §18.1: the key makes a retried POST return the same session rather
       // than opening a second one.
       headers: { 'idempotency-key': uuidv7() },
-      body: JSON.stringify({ gameType: 'quiz_solo', categorySlug: slug }),
+      body: JSON.stringify({
+        gameType: 'quiz_solo',
+        categorySlug: slug,
+        // §11.8: linking the session is what earns the ×1.5 tier.
+        ...(recommendationId ? { recommendationId } : {}),
+      }),
     });
 
     if (result.ok) {
@@ -85,11 +123,38 @@ export function HomeClient({ categories }: { categories: readonly CategoryOption
   }
 
   return (
-    <CategoryPicker
-      categories={categories}
-      startingSlug={startingSlug}
-      error={error}
-      onStart={(slug) => void start(slug)}
-    />
+    <div className="flex flex-col gap-6">
+      {recommendation ? (
+        <FocusCard
+          recommendation={recommendation}
+          starting={startingSlug === recommendation.categorySlug}
+          onStart={() =>
+            void start(
+              recommendation.categorySlug,
+              recommendation.claimable ? recommendation.recommendationId : undefined,
+            )
+          }
+        />
+      ) : null}
+
+      <CategoryPicker
+        categories={categories.map((category) => ({
+          ...category,
+          tier: tiers.get(category.slug) ?? 'NONE',
+        }))}
+        startingSlug={startingSlug}
+        error={error}
+        onStart={(slug) =>
+          void start(
+            slug,
+            // Starting the recommended category from the picker earns the
+            // bonus too — the learner should not have to use the card.
+            recommendation?.claimable && recommendation.categorySlug === slug
+              ? recommendation.recommendationId
+              : undefined,
+          )
+        }
+      />
+    </div>
   );
 }

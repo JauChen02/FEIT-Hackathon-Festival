@@ -29,6 +29,8 @@ export const POST = route(
         pointsBreakdown: result.pointsBreakdown,
         streak: result.streak,
         recommendationCompleted: result.recommendationCompleted,
+        // §11.7 / §11.8: why the weakness multiplier took its value.
+        weakness: result.weakness,
         review: result.review,
         accuracy: result.accuracy,
         correctCount: result.correctCount,

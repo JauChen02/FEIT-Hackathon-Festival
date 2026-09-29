@@ -192,13 +192,17 @@ describe("a completed session's database state", () => {
     expect(breakdown.uncappedPoints).toBeDefined();
     expect(breakdown.cap).toBeDefined();
     expect(breakdown.finalPoints).toBe(row.finalPoints);
-    // §24 Phase 1: multipliers fixed at 1.0.
+    // Phase 3 wires the weakness multiplier in. A learner's *first* session in
+    // a category always carries ×1.25: a never-played category scores exactly
+    // 0.50 on §11.4's weakness scale, which is above the 0.40 threshold, so it
+    // is a weak category and the session is snapshotted WEAK (§11.8).
+    // Streak stays 1.0 until Phase 2; friend and event are 1.0 by §10.1.
     expect(breakdown.multipliers).toMatchObject({
       streak: 1,
       friend: 1,
-      weakness: 1,
+      weakness: 1.25,
       event: 1,
-      session: '1',
+      session: '1.25',
     });
   });
 
@@ -263,21 +267,30 @@ describe("a completed session's database state", () => {
 });
 
 describe('the awarded points (§10)', () => {
-  it('scores a perfect, instant session at 1275', async () => {
+  it('scores a perfect, instant first session at 1594 (1275 × the 1.25 weak tier)', async () => {
     // Ten correct answers with the full window left → speed factor 1.0,
-    // q_base 100 each, combos 0..9, plus the 50 completion bonus.
+    // q_base 100 each, combos 0..9, plus the 50 completion bonus = 1275
+    // combo-adjusted. The learner has never played math, so §11.4 scores it
+    // 0.50 (weak) and §11.8 snapshots the session WEAK: 1275 × 1.25 = 1593.75,
+    // rounded half-up once at the end (§10.2 step 8).
     const { completed } = await playAndComplete('points_perfect');
 
     const breakdown = completed.body.pointsBreakdown as PointsBreakdown;
     expect(breakdown.rawBasePoints).toBe('1050');
     expect(breakdown.comboAdjustedPoints).toBe('1275');
+    expect(breakdown.multipliers.weakness).toBe(1.25);
+    expect(breakdown.uncappedPoints).toBe('1593.75');
     expect(breakdown.capApplied).toBe(false);
-    expect(completed.body.finalPoints).toBe(1275);
+    expect(completed.body.finalPoints).toBe(1594);
   });
 
   it('awards only the completion bonus when every answer is wrong', async () => {
+    // 50 × 1.25 (first session in a never-played category) = 62.5 → 63.
     const { completed } = await playAndComplete('points_all_wrong', () => false);
-    expect(completed.body.finalPoints).toBe(COMPLETION_BONUS);
+
+    const breakdown = completed.body.pointsBreakdown as PointsBreakdown;
+    expect(breakdown.rawBasePoints).toBe(String(COMPLETION_BONUS));
+    expect(completed.body.finalPoints).toBe(63);
   });
 
   it('reflects the combo reset in the breakdown', async () => {

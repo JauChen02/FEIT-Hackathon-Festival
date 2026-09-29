@@ -17,13 +17,13 @@ import { SESSION_TERMINAL_EVENT, inngest, sessionTerminalEventId } from './clien
  *    delivery (§18.1).
  */
 
-export type EventTransport = (sessionId: string) => Promise<void>;
+export type EventTransport = (sessionId: string, userId: string) => Promise<void>;
 
-const inngestTransport: EventTransport = async (sessionId) => {
+const inngestTransport: EventTransport = async (sessionId, userId) => {
   await inngest.send({
     id: sessionTerminalEventId(sessionId),
     name: SESSION_TERMINAL_EVENT,
-    data: { sessionId },
+    data: { sessionId, userId },
   });
 };
 
@@ -41,9 +41,9 @@ export function setEventTransport(next: EventTransport): () => void {
   };
 }
 
-export async function sendSessionTerminal(sessionId: string): Promise<void> {
+export async function sendSessionTerminal(sessionId: string, userId: string): Promise<void> {
   try {
-    await transport(sessionId);
+    await transport(sessionId, userId);
     logger.debug({ session_id: sessionId }, 'session.terminal_event_sent');
   } catch (error) {
     // §23.4: "Inngest send fails after commit → sessions/reconcile re-sends

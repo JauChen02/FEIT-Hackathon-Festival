@@ -25,6 +25,8 @@ export interface SessionRecord {
   mode: 'SOLO' | 'COOP' | 'VERSUS';
   status: SessionStatus;
   weaknessTier: 'NONE' | 'WEAK' | 'RECOMMENDED';
+  weaknessSnapshotJson: unknown;
+  recommendationId: string | null;
   questionCount: number | null;
   timeLimitMs: number | null;
   localDate: string | null;
@@ -45,6 +47,8 @@ const SESSION_COLUMNS = {
   mode: gameSessions.mode,
   status: gameSessions.status,
   weaknessTier: gameSessions.weaknessTier,
+  weaknessSnapshotJson: gameSessions.weaknessSnapshotJson,
+  recommendationId: gameSessions.recommendationId,
   questionCount: gameSessions.questionCount,
   timeLimitMs: gameSessions.timeLimitMs,
   localDate: gameSessions.localDate,
@@ -131,6 +135,8 @@ export interface CreateSessionInput {
   creationIdempotencyKey: string;
   weaknessTier: 'NONE' | 'WEAK' | 'RECOMMENDED';
   weaknessSnapshot: unknown;
+  /** Set when the session was started from today's recommendation (§11.8). */
+  recommendationId?: string | null;
   questionVersionIds: readonly string[];
   now: Date;
 }
@@ -149,6 +155,7 @@ export async function insertSession(tx: Database, input: CreateSessionInput): Pr
     status: 'CREATED',
     weaknessTier: input.weaknessTier,
     weaknessSnapshotJson: input.weaknessSnapshot,
+    recommendationId: input.recommendationId ?? null,
     questionCount: input.questionCount,
     timeLimitMs: input.timeLimitMs,
     creationIdempotencyKey: input.creationIdempotencyKey,
@@ -304,9 +311,9 @@ export async function listUnprocessedTerminalSessions(
   db: Database,
   cutoff: Date,
   limit = 500,
-): Promise<{ id: string }[]> {
+): Promise<{ id: string; ownerId: string }[]> {
   return db
-    .select({ id: gameSessions.id })
+    .select({ id: gameSessions.id, ownerId: gameSessions.ownerId })
     .from(gameSessions)
     .where(
       and(
@@ -316,6 +323,42 @@ export async function listUnprocessedTerminalSessions(
       ),
     )
     .limit(limit);
+}
+
+/**
+ * Accuracies of the learner's prior qualifying sessions in a category, most
+ * recent first (§11.7).
+ *
+ * "Abandoned/expired sessions are never part of the baseline", so the filter
+ * is `COMPLETED AND is_qualifying`. `ended_at < before` excludes the session
+ * being scored, which is still ACTIVE at the point this runs but would
+ * otherwise be picked up by a retry.
+ */
+export async function listPriorQualifyingAccuracies(
+  db: Database,
+  ownerId: string,
+  categoryId: string,
+  before: Date,
+  limit: number,
+): Promise<number[]> {
+  const rows = await db
+    .select({ resultJson: gameSessions.resultJson })
+    .from(gameSessions)
+    .where(
+      and(
+        eq(gameSessions.ownerId, ownerId),
+        eq(gameSessions.categoryId, categoryId),
+        eq(gameSessions.status, 'COMPLETED'),
+        eq(gameSessions.isQualifying, true),
+        lt(gameSessions.endedAt, before),
+      ),
+    )
+    .orderBy(desc(gameSessions.endedAt))
+    .limit(limit);
+
+  return rows
+    .map((row) => (row.resultJson as { accuracy?: number } | null)?.accuracy)
+    .filter((accuracy): accuracy is number => typeof accuracy === 'number');
 }
 
 export interface HistoryEntry {

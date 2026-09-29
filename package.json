@@ -23,7 +23,8 @@
     "db:seed": "pnpm --filter @learnarena/db db:seed",
     "db:reset": "pnpm --filter @learnarena/db db:reset",
     "content:import": "pnpm --filter @learnarena/db content:import",
-    "supabase": "supabase"
+    "supabase": "supabase",
+    "admin:backfill-skills": "pnpm --filter @learnarena/web admin:backfill-skills"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",

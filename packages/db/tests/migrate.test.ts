@@ -45,6 +45,7 @@ describe('checked-in migration files', () => {
       '0000_extensions.sql',
       '0001_mvp_schema.sql',
       '0002_constraints_and_policies.sql',
+      '0003_coach_indexes.sql',
     ]);
 
     const journal = JSON.parse(
@@ -54,6 +55,7 @@ describe('checked-in migration files', () => {
       '0000_extensions',
       '0001_mvp_schema',
       '0002_constraints_and_policies',
+      '0003_coach_indexes',
     ]);
   });
 
@@ -112,6 +114,25 @@ describe('after applying every migration to an empty database', () => {
     expect(rows[1]!.indexdef).toMatch(/UNIQUE/);
     expect(rows[1]!.indexdef).toMatch(/CREATED/);
     expect(rows[1]!.indexdef).toMatch(/SOLO/);
+  });
+
+  it('creates the Phase 3 coach indexes (0003)', async () => {
+    const rows = await ctx.db.execute<{ indexname: string; indexdef: string }>(
+      sql`select indexname, indexdef from pg_indexes
+          where schemaname = 'public'
+            and indexname in ('game_sessions_improvement_idx', 'recommendations_open_idx')
+          order by indexname`,
+    );
+    expect(rows.map((row) => row.indexname)).toEqual([
+      'game_sessions_improvement_idx',
+      'recommendations_open_idx',
+    ]);
+    // §11.7 reads the most recent qualifying completions per category.
+    expect(rows[0]!.indexdef).toMatch(/COMPLETED/);
+    expect(rows[0]!.indexdef).toMatch(/is_qualifying/);
+    // §11.5 reads the still-claimable recommendation for a local date.
+    expect(rows[1]!.indexdef).toMatch(/AVAILABLE/);
+    expect(rows[1]!.indexdef).toMatch(/IN_PROGRESS/);
   });
 
   it('creates the point_ledger append-only triggers', async () => {

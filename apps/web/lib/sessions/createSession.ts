@@ -2,6 +2,8 @@ import 'server-only';
 import {
   AppError,
   InsufficientQuestionsError,
+  isWeakCategory,
+  localDateFor,
   RECENT_ANSWER_EXCLUSION_DAYS,
   SOLO_QUESTION_COUNT,
   SOLO_TIME_LIMIT_MS,
@@ -12,15 +14,18 @@ import {
 import {
   findCategoryBySlug,
   findOpenSoloSession,
+  findRecommendationById,
   findSessionByIdempotencyKey,
   insertSession,
   isUniqueViolation,
   listLiveCandidates,
   listRecentlyAnsweredVersionIds,
+  markInProgress,
   type SessionRecord,
 } from '@learnarena/db';
 import { db } from '../db';
 import { logger } from '../logger';
+import { loadCoachSignals } from '../coach/signals';
 import { gameTypeIdForSlug } from './gameTypes';
 import { userRatingFor } from './userRating';
 
@@ -52,11 +57,12 @@ function toResult(session: SessionRecord, replayed: boolean): CreateSessionResul
 
 export async function createSoloSession(input: {
   userId: string;
+  timezone: string;
   request: CreateSessionRequest;
   idempotencyKey: string;
   now: Date;
 }): Promise<CreateSessionResult> {
-  const { userId, request, idempotencyKey, now } = input;
+  const { userId, timezone, request, idempotencyKey, now } = input;
 
   // §18.1: a repeated Idempotency-Key returns the existing session rather than
   // creating a second one.
@@ -94,6 +100,38 @@ export async function createSoloSession(input: {
     exclusionSince,
   );
 
+  // §11.8: the tier is decided **now** and frozen onto the session, so later
+  // skill changes cannot retroactively re-price a session already played.
+  const signals = await loadCoachSignals(db(), userId, now);
+  const wasWeak = isWeakCategory(signals.derived, category.slug);
+
+  let weaknessTier: 'NONE' | 'WEAK' | 'RECOMMENDED' = wasWeak ? 'WEAK' : 'NONE';
+  let linkedRecommendationId: string | null = null;
+
+  if (request.recommendationId) {
+    const recommendation = await findRecommendationById(db(), request.recommendationId);
+    const localDate = localDateFor(timezone, now);
+
+    // RECOMMENDED only when it is *today's* recommendation, belongs to this
+    // learner, still claimable, and actually points at this category.
+    const usable =
+      recommendation !== undefined &&
+      recommendation.userId === userId &&
+      recommendation.localDate === localDate &&
+      recommendation.categoryId === category.id &&
+      (recommendation.status === 'AVAILABLE' || recommendation.status === 'IN_PROGRESS');
+
+    if (usable) {
+      weaknessTier = 'RECOMMENDED';
+      linkedRecommendationId = recommendation.id;
+    } else {
+      logger.info(
+        { user_id: userId, recommendation_id: request.recommendationId },
+        'coach.recommendation_not_usable',
+      );
+    }
+  }
+
   let selection;
   try {
     selection = selectQuestions({
@@ -128,18 +166,33 @@ export async function createSoloSession(input: {
         questionCount: SOLO_QUESTION_COUNT,
         timeLimitMs: SOLO_TIME_LIMIT_MS,
         creationIdempotencyKey: idempotencyKey,
-        // §11.8: the tier is snapshotted at creation. Phase 1 has no Coach, so
-        // it is always NONE; Phase 3 computes WEAK / RECOMMENDED here.
-        weaknessTier: 'NONE',
+        weaknessTier,
+        // The snapshot is what the completion transaction falls back to when
+        // the recommendation turns out to be spent (§11.8).
         weaknessSnapshot: {
-          phase: 1,
-          reason: 'No Coach before Phase 3; weakness tier is NONE.',
+          wasWeak,
+          tier: weaknessTier,
           targetRating: selection.targetRating,
           exclusionRelaxed: selection.exclusionRelaxed,
+          categories: signals.derived.map((signal) => ({
+            categorySlug: signal.categorySlug,
+            rating: signal.rating,
+            weaknessScore: signal.weaknessScore,
+            proficiency: signal.proficiency,
+            confidence: signal.confidence,
+          })),
         },
+        recommendationId: linkedRecommendationId,
         questionVersionIds: selection.selected.map((item) => item.questionVersionId),
         now,
       });
+
+      // §15.5: AVAILABLE → IN_PROGRESS. Inside the same transaction as the
+      // session insert, so a session can never exist claiming a recommendation
+      // that was never moved.
+      if (linkedRecommendationId) {
+        await markInProgress(tx, linkedRecommendationId, now);
+      }
     });
   } catch (error) {
     // Two requests raced past the pre-check above; the partial unique index

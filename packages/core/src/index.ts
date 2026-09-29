@@ -4,7 +4,16 @@ export * from './errors';
 export * from './ids';
 export * from './rand';
 
+export * from './api/coach';
 export * from './api/session';
+
+export * from './coach/derived';
+export * from './coach/elo';
+export * from './coach/explorationHash';
+export * from './coach/improvement';
+export * from './coach/recommendation';
+export * from './coach/tier';
+export * from './coach/weakness';
 
 export * from './content/hash';
 export * from './content/rating';

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { signInViaMagicLink, uniqueEmail, uniqueUsername } from './helpers/auth';
+import { answerCurrentQuestion, onboard as onboardLearner, playWholeQuiz } from './helpers/quiz';
 
 /**
  * The Phase 1 journey (PLANNING.md §22.3, §24).
@@ -10,46 +10,8 @@ import { signInViaMagicLink, uniqueEmail, uniqueUsername } from './helpers/auth'
  * Runs against the real Next.js build and the real Supabase Auth stack.
  */
 
-/** Sign up and complete onboarding, landing on Home. */
-async function onboard(page: Page): Promise<void> {
-  await signInViaMagicLink(page, uniqueEmail());
-  await expect(page).toHaveURL(/\/onboarding$/);
-
-  await page.getByLabel('Username').fill(uniqueUsername('p1'));
-  await page.getByLabel('Display name').fill('Quiz Player');
-  await page.getByLabel('I confirm I am 16 or older.').check();
-  await page.getByRole('button', { name: 'Start learning' }).click();
-
-  await expect(page).toHaveURL(/\/home$/);
-}
-
-/**
- * Answer the question currently on screen.
- *
- * The client cannot know the right answer — that is the point of §8.1 — so
- * this picks the first option (or types a number) and lets the server grade.
- */
-async function answerCurrentQuestion(page: Page): Promise<void> {
-  await expect(page.getByTestId('question-prompt')).toBeVisible();
-
-  const numericInput = page.getByTestId('numeric-answer');
-  if (await numericInput.isVisible().catch(() => false)) {
-    await numericInput.fill('42');
-  } else {
-    await page.getByTestId('option-a').click();
-  }
-
-  await page.getByTestId('submit-answer').click();
-  await expect(page.getByTestId('answer-feedback')).toBeVisible();
-}
-
-/** Play all ten questions and land on the results screen. */
-async function playWholeQuiz(page: Page): Promise<void> {
-  for (let i = 0; i < 10; i += 1) {
-    await answerCurrentQuestion(page);
-    await page.getByTestId('continue').click();
-  }
-  await expect(page).toHaveURL(/\/results\//);
+function onboard(page: Page): Promise<void> {
+  return onboardLearner(page, { usernamePrefix: 'p1', displayName: 'Quiz Player' });
 }
 
 test.describe('the solo quiz loop', () => {

@@ -34,6 +34,7 @@ export const POST = route(
 
     const result = await createSoloSession({
       userId: user.id,
+      timezone: user.timezone,
       request: body,
       idempotencyKey: parsedKey.data,
       now: now(),

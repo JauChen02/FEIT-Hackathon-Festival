@@ -9,9 +9,10 @@
  *   3. Questions — imported from `content/`: 15 per launch category, 3 at each
  *      difficulty 1..5, exceeding the §13.6 floor of 12 with ≥2 per level.
  *   4. Fixture users with scripted learning histories, covering a strong
- *      category, a low-skill weak category, a stale category and a never-played
- *      user, so weak-category detection, recommendations and multipliers are
- *      testable from Phase 3 onward.
+ *      category, a low-skill weak category, a stale category, a never-played
+ *      user and one who has played every launch category, so weak-category
+ *      detection, recommendations and multipliers are testable from Phase 3
+ *      onward.
  *
  * Everything is deterministic: fixed ids (see seedIds.ts) and an explicit
  * correctness pattern rather than randomness, so two runs produce byte-identical
@@ -155,16 +156,25 @@ const CONTENT_USERS = [
   { username: 'seed_reviewer', displayName: 'Seed Reviewer', role: 'REVIEWER' as const },
 ];
 
-interface FixtureSpec {
-  username: string;
-  displayName: string;
-  category: CategorySlug | null;
+interface FixtureTrack {
+  category: CategorySlug;
   /** Number of completed 10-question sessions. */
   sessions: number;
   /** Share of answers that are correct, applied as an exact deterministic pattern. */
   accuracy: number;
-  /** Days before "now" at which the most recent session happened. */
+  /** Days before "now" at which the most recent session in this category happened. */
   recencyDays: number;
+}
+
+interface FixtureSpec {
+  username: string;
+  displayName: string;
+  /**
+   * One entry per category the fixture has played. Most fixtures isolate a
+   * single signal, so they have one track; `fx_rounded` has three, which is
+   * what makes "recommend the weakest *played* category" testable at all.
+   */
+  tracks: readonly FixtureTrack[];
   note: string;
 }
 
@@ -178,38 +188,41 @@ export const FIXTURE_USERS: readonly FixtureSpec[] = [
   {
     username: 'fx_strong',
     displayName: 'Fixture Strong',
-    category: 'math',
-    sessions: 4,
-    accuracy: 0.9,
-    recencyDays: 1,
+    tracks: [{ category: 'math', sessions: 4, accuracy: 0.9, recencyDays: 1 }],
     note: 'High proficiency and high confidence in math; logic and science never played.',
   },
   {
     username: 'fx_weak',
     displayName: 'Fixture Weak',
-    category: 'logic',
-    sessions: 3,
-    accuracy: 0.3,
-    recencyDays: 1,
+    tracks: [{ category: 'logic', sessions: 3, accuracy: 0.3, recencyDays: 1 }],
     note: 'Plenty of exposure in logic but low skill — the weak-and-frequent case.',
   },
   {
     username: 'fx_stale',
     displayName: 'Fixture Stale',
-    category: 'science',
-    sessions: 2,
-    accuracy: 0.7,
-    recencyDays: 35,
+    tracks: [{ category: 'science', sessions: 2, accuracy: 0.7, recencyDays: 35 }],
     note: 'Decent science skill, but every event is outside the 60-day exposure window.',
   },
   {
     username: 'fx_new',
     displayName: 'Fixture New',
-    category: null,
-    sessions: 0,
-    accuracy: 0,
-    recencyDays: 0,
+    tracks: [],
     note: 'Never played anything — every category scores the 0.50 never-played weakness.',
+  },
+  {
+    username: 'fx_rounded',
+    displayName: 'Fixture Rounded',
+    // 30 recent events in every launch category. The other fixtures all leave
+    // at least one category unplayed, and a never-played category scores
+    // exactly 0.50 (§11.4) — which beats almost any played one. So without this
+    // fixture nothing exercises the case the Coach actually faces most often:
+    // choosing between categories the learner has genuinely played.
+    tracks: [
+      { category: 'math', sessions: 3, accuracy: 0.9, recencyDays: 1 },
+      { category: 'science', sessions: 3, accuracy: 0.7, recencyDays: 2 },
+      { category: 'logic', sessions: 3, accuracy: 0.3, recencyDays: 3 },
+    ],
+    note: 'Played all three launch categories; logic is the weakest and should be recommended.',
   },
 ];
 
@@ -290,10 +303,9 @@ async function seedFixtureHistories(db: Database, now: Date): Promise<number> {
   let eventsWritten = 0;
 
   for (const fixture of FIXTURE_USERS) {
-    if (fixture.category === null || fixture.sessions === 0) continue;
+    if (fixture.tracks.length === 0) continue;
 
     const userId = seedIds.user(fixture.username);
-    const categoryId = seedIds.category(fixture.category);
 
     // Learning events are immutable (§9), so an existing history is left alone
     // rather than rewritten.
@@ -304,144 +316,156 @@ async function seedFixtureHistories(db: Database, now: Date): Promise<number> {
       .limit(1);
     if (existing.length > 0) continue;
 
-    const pool = await db
-      .select({ id: questionVersions.id, rating: questionVersions.rating })
-      .from(questionVersions)
-      .where(and(eq(questionVersions.categoryId, categoryId), eq(questionVersions.status, 'LIVE')))
-      .orderBy(questionVersions.rating, questionVersions.id);
+    // Session ids are namespaced by username and index, so the counter runs
+    // across a fixture's tracks rather than restarting per category.
+    let sessionIndex = 0;
 
-    if (pool.length < SOLO_QUESTION_COUNT) {
-      throw new Error(
-        `Fixture ${fixture.username} needs ${SOLO_QUESTION_COUNT} LIVE ${fixture.category} ` +
-          `questions but found ${pool.length}. Run content:import first.`,
-      );
-    }
+    for (const track of fixture.tracks) {
+      const categoryId = seedIds.category(track.category);
 
-    let rating = STARTING_USER_RATING;
-    let lifetimeEventCount = 0;
+      const pool = await db
+        .select({ id: questionVersions.id, rating: questionVersions.rating })
+        .from(questionVersions)
+        .where(
+          and(eq(questionVersions.categoryId, categoryId), eq(questionVersions.status, 'LIVE')),
+        )
+        .orderBy(questionVersions.rating, questionVersions.id);
 
-    for (let sessionIndex = 0; sessionIndex < fixture.sessions; sessionIndex += 1) {
-      // Most recent session is `recencyDays` ago; earlier ones step back a day.
-      const daysAgo = fixture.recencyDays + (fixture.sessions - 1 - sessionIndex);
-      const sessionStart = new Date(now.getTime() - daysAgo * 86_400_000);
-      const sessionId = seedIds.session(fixture.username, sessionIndex);
-      const pattern = correctnessPattern(SOLO_QUESTION_COUNT, fixture.accuracy);
+      if (pool.length < SOLO_QUESTION_COUNT) {
+        throw new Error(
+          `Fixture ${fixture.username} needs ${SOLO_QUESTION_COUNT} LIVE ${track.category} ` +
+            `questions but found ${pool.length}. Run content:import first.`,
+        );
+      }
 
-      await db.transaction(async (tx) => {
-        await tx.insert(gameSessions).values({
-          id: sessionId,
-          gameTypeId: quizSoloId,
-          mode: 'SOLO',
-          categoryId,
-          ownerId: userId,
-          status: 'COMPLETED',
-          weaknessTier: 'NONE',
-          weaknessSnapshotJson: { seeded: true, note: fixture.note },
-          questionCount: SOLO_QUESTION_COUNT,
-          timeLimitMs: SOLO_TIME_LIMIT_MS,
-          creationIdempotencyKey: seedIds.session(fixture.username, sessionIndex),
-          localDate: sessionStart.toISOString().slice(0, 10),
-          isQualifying: true,
-          createdAt: sessionStart,
-          startedAt: sessionStart,
-          lastActivityAt: sessionStart,
-          endedAt: sessionStart,
-          // Already post-processed: the seeded skill_updates below are the
-          // audit trail, so coach/process-session must not re-apply them.
-          postProcessedAt: sessionStart,
-        });
+      // §11.3 keeps one rating chain per (user, category), so each track starts
+      // fresh at 1000 rather than carrying the previous category's rating.
+      let rating = STARTING_USER_RATING;
+      let lifetimeEventCount = 0;
 
-        await tx.insert(sessionPlayers).values({ sessionId, userId });
+      for (let n = 0; n < track.sessions; n += 1, sessionIndex += 1) {
+        // Most recent session is `recencyDays` ago; earlier ones step back a day.
+        const daysAgo = track.recencyDays + (track.sessions - 1 - n);
+        const sessionStart = new Date(now.getTime() - daysAgo * 86_400_000);
+        const sessionId = seedIds.session(fixture.username, sessionIndex);
+        const pattern = correctnessPattern(SOLO_QUESTION_COUNT, track.accuracy);
 
-        for (let position = 0; position < SOLO_QUESTION_COUNT; position += 1) {
-          // Rotate through the pool so sessions differ but stay deterministic.
-          const version = pool[(sessionIndex * SOLO_QUESTION_COUNT + position) % pool.length]!;
-          const isCorrect = pattern[position]!;
-          const correctness = isCorrect ? 1 : 0;
-          const occurredAt = new Date(sessionStart.getTime() + position * 15_000);
-          const answerId = seedIds.answer(fixture.username, sessionIndex, position);
-
-          await tx.insert(sessionQuestions).values({
-            sessionId,
-            position,
-            questionVersionId: version.id,
-            servedAt: occurredAt,
-            deadlineAt: new Date(occurredAt.getTime() + SOLO_TIME_LIMIT_MS),
-          });
-
-          await tx.insert(answers).values({
-            id: answerId,
-            sessionId,
-            userId,
-            questionVersionId: version.id,
-            position,
-            outcome: 'ANSWERED',
-            responseJson: { seeded: true },
-            correctness: correctness.toFixed(3),
-            speedFactor: '0.7500',
-            responseTimeMs: 5_000,
-            serverReceivedAt: occurredAt,
-          });
-
-          const eventId = seedIds.learningEvent(fixture.username, sessionIndex, position);
-          await tx.insert(learningEvents).values({
-            id: eventId,
-            userId,
-            sessionId,
+        await db.transaction(async (tx) => {
+          await tx.insert(gameSessions).values({
+            id: sessionId,
             gameTypeId: quizSoloId,
-            sourceKey: version.id,
-            questionVersionId: version.id,
-            answerId,
+            mode: 'SOLO',
             categoryId,
-            difficultyRating: version.rating,
-            correctness: correctness.toFixed(3),
-            timedOut: false,
-            responseTimeMs: 5_000,
-            occurredAt,
-            createdAt: occurredAt,
+            ownerId: userId,
+            status: 'COMPLETED',
+            weaknessTier: 'NONE',
+            weaknessSnapshotJson: { seeded: true, note: fixture.note },
+            questionCount: SOLO_QUESTION_COUNT,
+            timeLimitMs: SOLO_TIME_LIMIT_MS,
+            creationIdempotencyKey: seedIds.session(fixture.username, sessionIndex),
+            localDate: sessionStart.toISOString().slice(0, 10),
+            isQualifying: true,
+            createdAt: sessionStart,
+            startedAt: sessionStart,
+            lastActivityAt: sessionStart,
+            endedAt: sessionStart,
+            // Already post-processed: the seeded skill_updates below are the
+            // audit trail, so coach/process-session must not re-apply them.
+            postProcessedAt: sessionStart,
           });
 
-          const itemRating = Number(version.rating);
-          const update = applyElo(rating, itemRating, correctness, lifetimeEventCount);
-          await tx.insert(skillUpdates).values({
-            id: seedIds.skillUpdate(fixture.username, sessionIndex, position),
-            learningEventId: eventId,
-            userId,
-            categoryId,
-            ratingBefore: rating.toFixed(2),
-            ratingAfter: update.ratingAfter.toFixed(2),
-            expected: update.expected.toFixed(5),
-            kFactor: update.kFactor,
-            createdAt: occurredAt,
-          });
+          await tx.insert(sessionPlayers).values({ sessionId, userId });
 
-          rating = Number(update.ratingAfter.toFixed(2));
-          lifetimeEventCount += 1;
-          eventsWritten += 1;
-        }
-      });
-    }
+          for (let position = 0; position < SOLO_QUESTION_COUNT; position += 1) {
+            // Rotate through the pool so sessions differ but stay deterministic.
+            const version = pool[(sessionIndex * SOLO_QUESTION_COUNT + position) % pool.length]!;
+            const isCorrect = pattern[position]!;
+            const correctness = isCorrect ? 1 : 0;
+            const occurredAt = new Date(sessionStart.getTime() + position * 15_000);
+            const answerId = seedIds.answer(fixture.username, sessionIndex, position);
 
-    const lastEventAt = new Date(now.getTime() - fixture.recencyDays * 86_400_000);
-    await db
-      .insert(skillProfiles)
-      .values({
-        userId,
-        categoryId,
-        rating: rating.toFixed(2),
-        lifetimeEventCount,
-        lastEventAt,
-        updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        target: [skillProfiles.userId, skillProfiles.categoryId],
-        set: {
+            await tx.insert(sessionQuestions).values({
+              sessionId,
+              position,
+              questionVersionId: version.id,
+              servedAt: occurredAt,
+              deadlineAt: new Date(occurredAt.getTime() + SOLO_TIME_LIMIT_MS),
+            });
+
+            await tx.insert(answers).values({
+              id: answerId,
+              sessionId,
+              userId,
+              questionVersionId: version.id,
+              position,
+              outcome: 'ANSWERED',
+              responseJson: { seeded: true },
+              correctness: correctness.toFixed(3),
+              speedFactor: '0.7500',
+              responseTimeMs: 5_000,
+              serverReceivedAt: occurredAt,
+            });
+
+            const eventId = seedIds.learningEvent(fixture.username, sessionIndex, position);
+            await tx.insert(learningEvents).values({
+              id: eventId,
+              userId,
+              sessionId,
+              gameTypeId: quizSoloId,
+              sourceKey: version.id,
+              questionVersionId: version.id,
+              answerId,
+              categoryId,
+              difficultyRating: version.rating,
+              correctness: correctness.toFixed(3),
+              timedOut: false,
+              responseTimeMs: 5_000,
+              occurredAt,
+              createdAt: occurredAt,
+            });
+
+            const itemRating = Number(version.rating);
+            const update = applyElo(rating, itemRating, correctness, lifetimeEventCount);
+            await tx.insert(skillUpdates).values({
+              id: seedIds.skillUpdate(fixture.username, sessionIndex, position),
+              learningEventId: eventId,
+              userId,
+              categoryId,
+              ratingBefore: rating.toFixed(2),
+              ratingAfter: update.ratingAfter.toFixed(2),
+              expected: update.expected.toFixed(5),
+              kFactor: update.kFactor,
+              createdAt: occurredAt,
+            });
+
+            rating = Number(update.ratingAfter.toFixed(2));
+            lifetimeEventCount += 1;
+            eventsWritten += 1;
+          }
+        });
+      }
+
+      const lastEventAt = new Date(now.getTime() - track.recencyDays * 86_400_000);
+      await db
+        .insert(skillProfiles)
+        .values({
+          userId,
+          categoryId,
           rating: rating.toFixed(2),
           lifetimeEventCount,
           lastEventAt,
           updatedAt: now,
-        },
-      });
+        })
+        .onConflictDoUpdate({
+          target: [skillProfiles.userId, skillProfiles.categoryId],
+          set: {
+            rating: rating.toFixed(2),
+            lifetimeEventCount,
+            lastEventAt,
+            updatedAt: now,
+          },
+        });
+    }
   }
 
   return eventsWritten;

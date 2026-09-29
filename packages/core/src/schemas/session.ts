@@ -12,6 +12,12 @@ export const createSessionSchema = z.object({
   // than a 404, because the value is not a resource identifier.
   gameType: z.literal('quiz_solo', { message: 'Only quiz_solo sessions can be created.' }),
   categorySlug: z.string().regex(/^[a-z]+$/, { message: 'categorySlug must be a lowercase slug.' }),
+  /**
+   * Links the session to today's recommendation, which is what earns the ×1.5
+   * tier (§11.8). Ignored when it is not today's, not this learner's, already
+   * spent, or for a different category.
+   */
+  recommendationId: z.uuid({ message: 'recommendationId must be a UUID.' }).optional(),
 });
 
 export type CreateSessionRequest = z.infer<typeof createSessionSchema>;

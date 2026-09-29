@@ -10,6 +10,7 @@ import { ok, route } from '@/lib/api/handler';
 import { db } from '@/lib/db';
 import { loadSessionContext } from '@/lib/sessions/context';
 import { categorySlugForId } from '@/lib/sessions/categories';
+import { loadSkillDeltas } from '@/lib/sessions/results';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +30,11 @@ export const GET = route(
     const { session } = await loadSessionContext(request, params.id);
     const answers = await listAnswers(db(), session.id);
 
+    // Null until coach/process-session has run, which is what the results
+    // screen renders as "working it out" (§20 screen 6).
+    const sessionCategorySlug = await categorySlugForId(db(), session.categoryId);
+    const skillDeltas = await loadSkillDeltas(db(), session, () => sessionCategorySlug);
+
     const response: SessionStateResponse = {
       session: {
         id: session.id,
@@ -41,7 +47,7 @@ export const GET = route(
         endedAt: session.endedAt?.toISOString() ?? null,
       },
       result: (session.resultJson as SessionResult | null) ?? null,
-      skillDeltas: null,
+      skillDeltas,
     };
 
     return ok(response, requestId);

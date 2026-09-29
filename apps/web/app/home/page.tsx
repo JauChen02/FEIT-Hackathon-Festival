@@ -12,8 +12,8 @@ export const dynamic = 'force-dynamic';
 /**
  * Home (PLANNING.md §20 screen 3).
  *
- * Phase 1 adds the category buttons that start a quiz. The streak flame and
- * the "Focus today" card need Phases 2 and 3.
+ * The category buttons start a quiz and the "Focus today" card carries the
+ * Coach's daily pick. The streak flame needs Phase 2.
  *
  * ADR-021: this route file does the fetching; the components only render.
  */
@@ -48,9 +48,14 @@ export default async function HomePage() {
           }))}
         />
 
-        <Button asChild variant="outline" className="self-start" data-testid="home-history-link">
-          <Link href="/history">History</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" data-testid="home-skills-link">
+            <Link href="/skills">Skills</Link>
+          </Button>
+          <Button asChild variant="outline" data-testid="home-history-link">
+            <Link href="/history">History</Link>
+          </Button>
+        </div>
       </div>
     </main>
   );

@@ -4,6 +4,7 @@ import { transitionSession, type SessionRecord } from '@learnarena/db';
 import { db } from '../db';
 import { logger } from '../logger';
 import { sendSessionTerminal } from '../inngest/events';
+import { releaseRecommendation } from './releaseRecommendation';
 
 /**
  * Abandon and cancel (PLANNING.md §8.2, §15.1).
@@ -93,7 +94,10 @@ async function finish(
   // §18.3 names COMPLETED, ABANDONED and EXPIRED. CANCELLED is included too:
   // without it the session keeps `post_processed_at IS NULL` forever and
   // sessions/reconcile re-sends for it every hour (ADR-042).
-  await sendSessionTerminal(session.id);
+  // §11.5: "Abandoning does not consume it." Give the recommendation back
+  // so the learner can still earn today's bonus.
+  await releaseRecommendation(session);
+  await sendSessionTerminal(session.id, session.ownerId);
 
   return { status: to, changed: true };
 }
