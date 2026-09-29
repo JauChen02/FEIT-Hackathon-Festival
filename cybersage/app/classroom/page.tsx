@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import { loadProgress } from "@/lib/progress";
 import { UserProgress } from "@/types";
 import Link from "next/link";
-import { ChevronLeft, Users, Copy, Check, Play, BookOpen } from "lucide-react";
+import { ChevronLeft, Users, Copy, Check, Play, BookOpen, ArrowRight, Radio, Gamepad2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { clsx } from "clsx";
 import { useRouter } from "next/navigation";
 
 function generateCode() {
@@ -25,7 +24,7 @@ export default function ClassroomPage() {
   useEffect(() => {
     const p = loadProgress();
     setProgress(p);
-    setPlayerName(p.displayName);
+    setPlayerName(p.displayName || "Agent_Guest");
     setHostCode(generateCode());
   }, []);
 
@@ -45,167 +44,234 @@ export default function ClassroomPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <nav className="sticky top-0 z-50 border-b border-[#1A4A8A]/30 bg-[#071428]/80 backdrop-blur-md px-6 py-3.5">
-        <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <Link href="/" className="flex items-center gap-1.5 text-sm text-blue-300/60 hover:text-blue-200">
-            <ChevronLeft size={16} /> Back
+    <div className="min-h-screen bg-[#0066B3] text-white selection:bg-white/20 selection:text-white font-sans flex flex-col">
+      {/* 1. 顶部纯白导航栏 (与首页完全一致) */}
+      <nav className="sticky top-0 z-50 bg-white border-b border-slate-100 px-6 sm:px-8 py-3.5 shadow-sm text-slate-800">
+        <div className="mx-auto flex max-w-4xl items-center justify-between">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 hover:text-[#0066B3] transition"
+          >
+            <ChevronLeft size={16} /> Missions
           </Link>
+
           <div className="flex items-center gap-2">
-            <Users size={16} className="text-[#4FC3F7]" />
-            <span className="font-semibold text-white">Classroom</span>
+            <div className="grid grid-cols-2 gap-0.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#0066B3]"></span>
+              <span className="h-1.5 w-1.5 rounded-full bg-[#38BDF8]"></span>
+              <span className="h-1.5 w-1.5 rounded-full bg-[#0284C7]"></span>
+              <span className="h-1.5 w-1.5 rounded-full bg-[#004C85]"></span>
+            </div>
+            <span className="font-extrabold text-slate-900 tracking-tight text-sm">Classroom Arena</span>
           </div>
-          <div className="w-16" />
+
+          <div className="text-xs font-mono font-bold text-slate-400">
+            {progress?.avatar} {progress?.displayName}
+          </div>
         </div>
       </nav>
 
-      <main className="mx-auto max-w-2xl px-6 py-12">
+      {/* 2. 主体操作面板 */}
+      <main className="flex-1 w-full max-w-3xl mx-auto px-6 py-12 flex flex-col justify-start">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="mb-8 text-center">
-            <div className="mb-3 text-5xl">🎓</div>
-            <h1 className="text-2xl font-bold text-white">Live Classroom</h1>
-            <p className="mt-1 text-sm text-blue-300/50">
-              Kahoot-style cybersecurity quizzes with your class. Real-time leaderboard included.
+          {/* Header 说明 */}
+          <div className="mb-10 text-center">
+            <div className="inline-block p-3 rounded-2xl bg-white/10 backdrop-blur-md mb-3 border border-white/20 text-3xl">
+              🎓
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight text-white mb-2">
+              Live Classroom
+            </h1>
+            <p className="max-w-md mx-auto text-blue-100/90 text-sm sm:text-base leading-relaxed font-normal">
+              Kahoot-style cybersecurity battle arena. Host a live session with your cohort or enter a room code.
             </p>
           </div>
 
+          {/* 模式选择（白底 + 直角卡片） */}
           {mode === "choose" && (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-5 sm:grid-cols-2">
+              {/* Host 卡片 */}
               <button
                 onClick={() => setMode("host")}
-                className="group rounded-2xl border border-[#1A4A8A]/40 bg-[#0B1E3D]/60 p-6 text-left transition hover:border-[#2D7DD2]/60 hover:bg-[#0F2548]/70"
+                className="group relative flex flex-col justify-between bg-white border border-slate-200 rounded-none p-6 text-left shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:border-[#0066B3]"
               >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#1A4A8A]/30 text-2xl group-hover:bg-[#1A4A8A]/50 transition">
-                  📡
+                <div>
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center bg-blue-50 text-[#0066B3] border border-blue-100">
+                    <Radio size={22} />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0066B3]">
+                    Instructor / Leader
+                  </span>
+                  <h3 className="text-lg font-black text-slate-900 mt-1 mb-2">
+                    Host a Session
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    Create a live room, project on screen, and guide students through adaptive cyber challenges.
+                  </p>
                 </div>
-                <h3 className="font-semibold text-white mb-1">Host a Session</h3>
-                <p className="text-sm text-blue-300/50 leading-relaxed">
-                  Create a room, share the code with your class, and run a live quiz battle.
-                </p>
+
+                <div className="mt-6 flex items-center gap-1.5 text-xs font-bold text-[#0066B3] border-t border-slate-100 pt-3">
+                  <span>Create Arena</span>
+                  <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
+                </div>
               </button>
 
+              {/* Join 卡片 */}
               <button
                 onClick={() => setMode("join")}
-                className="group rounded-2xl border border-[#1A4A8A]/40 bg-[#0B1E3D]/60 p-6 text-left transition hover:border-[#2D7DD2]/60 hover:bg-[#0F2548]/70"
+                className="group relative flex flex-col justify-between bg-white border border-slate-200 rounded-none p-6 text-left shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:border-[#0066B3]"
               >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#1A4A8A]/30 text-2xl group-hover:bg-[#1A4A8A]/50 transition">
-                  🎮
+                <div>
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center bg-emerald-50 text-emerald-600 border border-emerald-100">
+                    <Gamepad2 size={22} />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-600">
+                    Student / Defender
+                  </span>
+                  <h3 className="text-lg font-black text-slate-900 mt-1 mb-2">
+                    Join a Session
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    Enter the 6-character room PIN from your session host to battle on the live scoreboard.
+                  </p>
                 </div>
-                <h3 className="font-semibold text-white mb-1">Join a Session</h3>
-                <p className="text-sm text-blue-300/50 leading-relaxed">
-                  Enter a room code from your instructor to compete with classmates.
-                </p>
+
+                <div className="mt-6 flex items-center gap-1.5 text-xs font-bold text-emerald-600 border-t border-slate-100 pt-3">
+                  <span>Enter Room</span>
+                  <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
+                </div>
               </button>
 
+              {/* Solo Practice 连贯卡片 */}
               <Link
-                href={`/scenario/${progress ? "phishing-01" : "phishing-01"}`}
-                className="group sm:col-span-2 flex items-center gap-4 rounded-2xl border border-[#1A4A8A]/40 bg-[#0B1E3D]/60 p-5 transition hover:border-[#2D7DD2]/60"
+                href="/scenario/phishing-01"
+                className="group sm:col-span-2 flex items-center justify-between bg-white/10 border border-white/20 rounded-none p-5 text-white backdrop-blur-sm hover:bg-white/15 transition shadow-sm"
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#1A4A8A]/30 text-xl">
-                  🧑‍💻
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center bg-white/10 text-xl border border-white/20">
+                    🧑‍💻
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-white">Solo Interactive Practice</p>
+                    <p className="text-xs text-blue-100/70">Work through modules individually with real-time AI mentoring</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-white">Solo Practice</p>
-                  <p className="text-sm text-blue-300/40">Work through missions at your own pace with AI coaching</p>
-                </div>
-                <BookOpen size={16} className="ml-auto text-blue-300/30" />
+                <BookOpen size={18} className="text-white/60 group-hover:text-white transition-colors" />
               </Link>
             </div>
           )}
 
+          {/* Host 流程 */}
           {mode === "host" && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-              <button onClick={() => setMode("choose")} className="text-sm text-blue-300/50 hover:text-blue-200 flex items-center gap-1">
-                <ChevronLeft size={14} /> Back
+              <button
+                onClick={() => setMode("choose")}
+                className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-white/80 hover:text-white transition"
+              >
+                <ChevronLeft size={14} /> Back to Selection
               </button>
-              
-              <div className="rounded-2xl border border-[#1A4A8A]/30 bg-[#0B1E3D]/60 p-6 space-y-5">
+
+              <div className="bg-white border border-slate-200 rounded-none p-8 text-slate-800 shadow-xl space-y-6">
                 <div>
-                  <label className="block text-xs text-blue-300/50 mb-2">Your display name</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    Your Host Display Name
+                  </label>
                   <input
                     value={playerName}
                     onChange={(e) => setPlayerName(e.target.value)}
-                    className="w-full rounded-xl border border-[#1A4A8A]/40 bg-[#071428]/80 px-4 py-2.5 text-sm text-blue-100 outline-none focus:border-[#2D7DD2]/60"
+                    className="w-full rounded-none border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-[#0066B3] focus:bg-white transition"
                     placeholder="Enter your name..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs text-blue-300/50 mb-2">Share this room code with your class</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    Class Room PIN (Project this on screen)
+                  </label>
                   <div className="flex items-center gap-3">
-                    <div
-                      className="flex-1 rounded-xl border border-[#00B4D8]/40 bg-[#0077B6]/10 px-4 py-3 text-center text-3xl font-bold tracking-[0.3em] text-[#4FC3F7]"
-                      style={{ fontFamily: "monospace" }}
-                    >
+                    <div className="flex-1 rounded-none border-2 border-dashed border-[#0066B3] bg-blue-50/60 px-4 py-3 text-center text-3xl font-black tracking-[0.35em] text-[#0066B3] font-mono">
                       {hostCode}
                     </div>
                     <button
                       onClick={copyCode}
-                      className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#1A4A8A]/40 bg-[#1A4A8A]/20 text-blue-300 transition hover:bg-[#1A4A8A]/40"
+                      className="flex h-14 w-14 items-center justify-center border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
+                      title="Copy PIN"
                     >
-                      {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                      {copied ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
                     </button>
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-[#1A4A8A]/20 bg-[#071428]/60 px-4 py-3">
-                  <p className="text-xs text-blue-300/40 text-center">Waiting for players to join... (simulated)</p>
-                  <div className="mt-2 flex justify-center gap-2 flex-wrap">
+                <div className="border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs font-semibold text-slate-500 text-center">
+                    Simulated Active Lobby
+                  </p>
+                  <div className="mt-3 flex justify-center gap-2 flex-wrap">
                     {["🦊 ShadowFox", "🐬 NetNinja", "🦅 NightOwl"].map((p) => (
-                      <span key={p} className="text-xs rounded-full border border-[#1A4A8A]/30 px-2.5 py-1 text-blue-200/60">{p}</span>
+                      <span
+                        key={p}
+                        className="text-xs font-medium rounded-none bg-white border border-slate-200 px-3 py-1 text-slate-700 shadow-sm"
+                      >
+                        {p}
+                      </span>
                     ))}
                   </div>
                 </div>
 
                 <button
                   onClick={startGame}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white transition"
-                  style={{ background: "linear-gradient(135deg, #0077B6, #00B4D8)", boxShadow: "0 0 20px rgba(0,180,216,0.25)" }}
+                  className="flex w-full items-center justify-center gap-2 rounded-none bg-[#0066B3] py-3.5 text-xs font-black uppercase tracking-wider text-white transition hover:bg-[#005596] shadow-md active:scale-[0.99]"
                 >
-                  <Play size={16} />
-                  Start the Quiz
+                  <Play size={15} />
+                  Start Live Session
                 </button>
               </div>
             </motion.div>
           )}
 
+          {/* Join 流程 */}
           {mode === "join" && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-              <button onClick={() => setMode("choose")} className="text-sm text-blue-300/50 hover:text-blue-200 flex items-center gap-1">
-                <ChevronLeft size={14} /> Back
+              <button
+                onClick={() => setMode("choose")}
+                className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-white/80 hover:text-white transition"
+              >
+                <ChevronLeft size={14} /> Back to Selection
               </button>
-              
-              <div className="rounded-2xl border border-[#1A4A8A]/30 bg-[#0B1E3D]/60 p-6 space-y-5">
+
+              <div className="bg-white border border-slate-200 rounded-none p-8 text-slate-800 shadow-xl space-y-6">
                 <div>
-                  <label className="block text-xs text-blue-300/50 mb-2">Your display name</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    Your Player Call-Sign
+                  </label>
                   <input
                     value={playerName}
                     onChange={(e) => setPlayerName(e.target.value)}
-                    className="w-full rounded-xl border border-[#1A4A8A]/40 bg-[#071428]/80 px-4 py-2.5 text-sm text-blue-100 outline-none focus:border-[#2D7DD2]/60"
+                    className="w-full rounded-none border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-[#0066B3] focus:bg-white transition"
                     placeholder="Enter your name..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs text-blue-300/50 mb-2">Room code (from your instructor)</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    6-Digit Room Code
+                  </label>
                   <input
                     value={joinCode}
                     onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                     maxLength={6}
-                    className="w-full rounded-xl border border-[#1A4A8A]/40 bg-[#071428]/80 px-4 py-3 text-center text-2xl font-bold tracking-widest text-[#4FC3F7] outline-none focus:border-[#2D7DD2]/60"
-                    style={{ fontFamily: "monospace" }}
-                    placeholder="_ _ _ _ _ _"
+                    className="w-full rounded-none border-2 border-slate-300 bg-slate-50 px-4 py-3 text-center text-3xl font-black tracking-widest text-[#0066B3] outline-none font-mono focus:border-[#0066B3] focus:bg-white transition"
+                    placeholder="______"
                   />
                 </div>
 
                 <button
                   onClick={joinGame}
                   disabled={joinCode.trim().length < 4}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white transition disabled:opacity-40"
-                  style={{ background: "linear-gradient(135deg, #0077B6, #00B4D8)" }}
+                  className="flex w-full items-center justify-center gap-2 rounded-none bg-[#0066B3] py-3.5 text-xs font-black uppercase tracking-wider text-white transition hover:bg-[#005596] disabled:opacity-50 shadow-md active:scale-[0.99]"
                 >
-                  <Play size={16} />
-                  Join Game
+                  <Play size={15} />
+                  Join Room
                 </button>
               </div>
             </motion.div>

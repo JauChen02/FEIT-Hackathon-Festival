@@ -8,6 +8,7 @@ import KahootQuestionComponent from "@/components/classroom/KahootQuestion";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { clsx } from "clsx";
+import { Trophy, ChevronLeft, ArrowRight, Zap, Target, CheckCircle2, XCircle } from "lucide-react";
 
 interface Result {
   questionId: string;
@@ -35,7 +36,11 @@ function PlayContent() {
     if (phase !== "countdown") return;
     const t = setInterval(() => {
       setCountdown((n) => {
-        if (n <= 1) { clearInterval(t); setPhase("question"); return 0; }
+        if (n <= 1) {
+          clearInterval(t);
+          setPhase("question");
+          return 0;
+        }
         return n - 1;
       });
     }, 1000);
@@ -64,48 +69,55 @@ function PlayContent() {
   const correctCount = results.filter((r) => r.isCorrect).length;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Room header */}
-      <div className="border-b border-[#1A4A8A]/30 bg-[#071428]/80 backdrop-blur-md px-6 py-3">
+    <div className="min-h-screen bg-[#0066B3] text-white selection:bg-white/20 selection:text-white font-sans flex flex-col">
+      {/* 1. 顶部纯白状态导航栏 */}
+      <div className="sticky top-0 z-50 bg-white border-b border-slate-100 px-6 sm:px-8 py-3.5 shadow-sm text-slate-800">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <div>
-            <p className="text-xs text-blue-300/40">Room</p>
-            <p className="font-mono text-sm font-bold text-[#4FC3F7]">{code}</p>
+            <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">Room PIN</p>
+            <p className="font-mono text-base font-black text-[#0066B3] tracking-widest">{code}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-blue-300/40">{isHost ? "Hosting as" : "Playing as"}</p>
-            <p className="text-sm font-medium text-white">{playerName}</p>
+            <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+              {isHost ? "Hosting as" : "Playing as"}
+            </p>
+            <p className="text-sm font-black text-slate-900 truncate max-w-[140px] sm:max-w-none">{playerName}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-blue-300/40">XP earned</p>
-            <p className="text-sm font-bold text-[#4FC3F7]">+{totalXP}</p>
+            <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">XP Gained</p>
+            <p className="font-mono text-base font-black text-emerald-600">+{totalXP}</p>
           </div>
         </div>
       </div>
 
-      <main className="flex-1 mx-auto w-full max-w-2xl px-6 py-8">
+      <main className="flex-1 mx-auto w-full max-w-2xl px-6 py-8 flex flex-col justify-center">
         <AnimatePresence mode="wait">
+          {/* 阶段 1：倒计时 */}
           {phase === "countdown" && (
             <motion.div
               key="countdown"
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 1.5, opacity: 0 }}
-              className="flex h-full min-h-[60vh] items-center justify-center flex-col gap-4"
+              exit={{ scale: 1.4, opacity: 0 }}
+              className="flex h-full min-h-[50vh] items-center justify-center flex-col gap-4 text-center"
             >
-              <p className="text-blue-300/50 text-lg">Get ready...</p>
-              <p className="text-8xl font-bold text-white" style={{ textShadow: "0 0 40px rgba(79,195,247,0.5)" }}>
+              <p className="text-blue-100 text-sm font-mono uppercase tracking-widest font-bold">
+                Match starting in
+              </p>
+              <p className="text-9xl font-black text-white drop-shadow-lg">
                 {countdown}
               </p>
             </motion.div>
           )}
 
+          {/* 阶段 2：Kahoot 答题中 */}
           {phase === "question" && (
             <motion.div
               key={`q-${currentQ}`}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2 }}
             >
               <KahootQuestionComponent
                 question={questions[currentQ]}
@@ -116,49 +128,76 @@ function PlayContent() {
             </motion.div>
           )}
 
+          {/* 阶段 3：结算面板 */}
           {phase === "final" && (
             <motion.div
               key="final"
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-center space-y-6 py-8"
+              className="bg-white border border-slate-200 rounded-none p-6 sm:p-8 text-slate-800 shadow-2xl space-y-6 text-center"
             >
-              <div className="text-6xl">{correctCount === questions.length ? "🏆" : correctCount >= 3 ? "🛡️" : "💪"}</div>
-              <div>
-                <h2 className="text-2xl font-bold text-white">Quiz Complete!</h2>
-                <p className="text-blue-300/50 mt-1">{playerName}</p>
+              <div className="text-5xl mb-2">
+                {correctCount === questions.length ? "🏆" : correctCount >= 3 ? "🛡️" : "💪"}
               </div>
 
+              <div>
+                <h2 className="text-2xl font-black text-slate-900">Battle Complete!</h2>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-1">
+                  Participant: {playerName}
+                </p>
+              </div>
+
+              {/* 三格指标数据 */}
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { label: "Correct", value: `${correctCount}/${questions.length}`, color: "text-emerald-300" },
-                  { label: "XP Earned", value: `+${totalXP}`, color: "text-[#4FC3F7]" },
-                  { label: "Accuracy", value: `${Math.round((correctCount / questions.length) * 100)}%`, color: "text-blue-300" },
-                ].map(({ label, value, color }) => (
-                  <div key={label} className="rounded-xl border border-[#1A4A8A]/30 bg-[#0B1E3D]/60 py-4">
-                    <p className={clsx("text-xl font-bold", color)}>{value}</p>
-                    <p className="text-xs text-blue-300/40 mt-0.5">{label}</p>
+                  { label: "Correct", value: `${correctCount}/${questions.length}`, color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-100" },
+                  { label: "XP Earned", value: `+${totalXP}`, color: "text-[#0066B3]", bg: "bg-blue-50 border-blue-100" },
+                  { label: "Accuracy", value: `${Math.round((correctCount / questions.length) * 100)}%`, color: "text-amber-700", bg: "bg-amber-50 border-amber-100" },
+                ].map(({ label, value, color, bg }) => (
+                  <div key={label} className={`border rounded-none p-3.5 ${bg}`}>
+                    <p className={clsx("text-xl font-black font-mono", color)}>{value}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">{label}</p>
                   </div>
                 ))}
               </div>
 
-              {/* Question breakdown */}
-              <div className="rounded-xl border border-[#1A4A8A]/30 bg-[#0B1E3D]/60 p-4 text-left space-y-2">
+              {/* 答题详细复盘 */}
+              <div className="border border-slate-200 bg-slate-50 p-4 text-left space-y-2">
+                <p className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  Question Breakdown
+                </p>
                 {results.map((r, i) => (
-                  <div key={r.questionId} className="flex items-center gap-3 text-sm">
-                    <span>{r.isCorrect ? "✅" : "❌"}</span>
-                    <span className="flex-1 text-blue-200/60 truncate">{questions[i].question}</span>
-                    {r.isCorrect && <span className="text-xs text-[#4FC3F7]">+{r.xpGained} XP</span>}
+                  <div key={r.questionId} className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold border-b border-slate-200/60 pb-2 last:border-b-0 last:pb-0">
+                    <span>
+                      {r.isCorrect ? (
+                        <CheckCircle2 size={16} className="text-emerald-600 inline" />
+                      ) : (
+                        <XCircle size={16} className="text-rose-600 inline" />
+                      )}
+                    </span>
+                    <span className="flex-1 text-slate-700 truncate">{questions[i].question}</span>
+                    {r.isCorrect && (
+                      <span className="text-xs font-mono font-bold text-emerald-600">+{r.xpGained} XP</span>
+                    )}
                   </div>
                 ))}
               </div>
 
-              <div className="flex gap-3 justify-center">
-                <Link href="/leaderboard" className="rounded-xl border border-[#1A4A8A]/40 bg-[#1A4A8A]/20 px-5 py-2.5 text-sm font-medium text-blue-200 hover:bg-[#1A4A8A]/30 transition">
+              {/* 操作按钮 */}
+              <div className="flex gap-3 justify-center pt-2">
+                <Link
+                  href="/leaderboard"
+                  className="flex-1 flex items-center justify-center gap-1.5 border border-slate-300 bg-slate-50 px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-100 transition rounded-none"
+                >
+                  <Trophy size={14} className="text-amber-500" />
                   View Rankings
                 </Link>
-                <Link href="/" className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition" style={{ background: "linear-gradient(135deg, #0077B6, #00B4D8)" }}>
-                  Back to Missions
+                <Link
+                  href="/"
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-[#0066B3] px-5 py-3 text-xs font-black uppercase tracking-wider text-white hover:bg-[#005596] shadow-md transition rounded-none"
+                >
+                  <span>Missions Track</span>
+                  <ArrowRight size={14} />
                 </Link>
               </div>
             </motion.div>
@@ -171,7 +210,13 @@ function PlayContent() {
 
 export default function PlayPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-blue-300/50">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#0066B3] text-white font-mono font-bold">
+          Entering Arena...
+        </div>
+      }
+    >
       <PlayContent />
     </Suspense>
   );
