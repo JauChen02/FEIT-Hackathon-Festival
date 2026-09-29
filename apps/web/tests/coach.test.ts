@@ -1,3 +1,4 @@
+import { seedId } from '@learnarena/db';
 /**
  * The deterministic Coach (PLANNING.md §11, §15.5, §18.2 steps 6-7, §18.3).
  *
@@ -21,6 +22,8 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { count, eq } from 'drizzle-orm';
 import {
   FixedClock,
+  explorationSeed,
+  localDateFor,
   uuidv7,
   type PointsBreakdown,
   type RecommendationResponse,
@@ -59,7 +62,10 @@ let terminalEvents: { sessionId: string; userId: string }[];
 const START = '2026-09-29T12:00:00.000Z';
 
 async function signUpFresh(username: string, timezone = 'Australia/Melbourne'): Promise<string> {
-  currentUserId = uuidv7();
+  let candidate = 0;
+  do {
+    currentUserId = seedId('coach-test', `${username}:${candidate++}`);
+  } while (explorationSeed(currentUserId, localDateFor(timezone, clock.now())).r < 0.1);
   ctx.signInAs(currentUserId);
   await onboardingRoute(
     jsonRequest('/api/me/onboarding', {
@@ -407,7 +413,7 @@ describe('GET /api/me/recommendation (§11.5)', () => {
       exploration: { r: number; probability: number; applied: boolean; seed: string };
     };
 
-    expect(reason.categories).toHaveLength(3);
+    expect(reason.categories).toHaveLength(4);
     expect(reason.categories[0]).toMatchObject({
       categorySlug: expect.any(String),
       weaknessScore: expect.any(Number),
@@ -495,7 +501,7 @@ describe('the recommendation bonus (§11.5, §11.8)', () => {
   it('snapshots WEAK for a weak category played without the recommendation', async () => {
     await signUpFresh('tier_weak');
     // Never played, so every category is weak (0.50 > 0.40).
-    const created = await createSession('science');
+    const created = await createSession('math');
 
     const session = await ctx.db.query.gameSessions.findFirst({
       where: (table, { eq: equals }) => equals(table.id, created.body.sessionId),
@@ -745,12 +751,17 @@ describe('the recommendation bonus (§11.5, §11.8)', () => {
 // ---------------------------------------------------------------------------
 
 describe('GET /api/me/skills (§11.4)', () => {
-  it('reports three launch categories at the starting rating for a new learner', async () => {
+  it('reports four active categories at the starting rating for a new learner', async () => {
     await signUpFresh('skills_new');
     const result = await getSkills();
 
     expect(result.status).toBe(200);
-    expect(result.body.categories.map((c) => c.categorySlug)).toEqual(['logic', 'math', 'science']);
+    expect(result.body.categories.map((c) => c.categorySlug)).toEqual([
+      'logic',
+      'math',
+      'memory',
+      'science',
+    ]);
     for (const category of result.body.categories) {
       expect(category.rating).toBe(1000);
       expect(category.proficiency).toBe(50);
@@ -760,11 +771,11 @@ describe('GET /api/me/skills (§11.4)', () => {
     }
   });
 
-  it('lists every never-played category as a weakness and no strengths', async () => {
+  it('lists the top three never-played categories as weaknesses and no strengths', async () => {
     await signUpFresh('skills_weak');
     const result = await getSkills();
 
-    expect([...result.body.weaknesses].sort()).toEqual(['logic', 'math', 'science']);
+    expect([...result.body.weaknesses].sort()).toEqual(['logic', 'math', 'memory']);
     expect(result.body.strengths).toEqual([]);
   });
 

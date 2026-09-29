@@ -12,7 +12,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
-import { MVP_ENUM_NAMES, MVP_TABLE_NAMES } from '../src/schema/index';
+import { MVP_ENUM_NAMES, MVP_TABLE_NAMES, ALPHA_TABLE_NAMES } from '../src/schema/index';
 import { MIGRATIONS_FOLDER, runMigrations } from '../src/commands/migrate';
 import { resetDatabase } from '../src/commands/reset';
 import { createTestDatabase, type TestDatabase } from './helpers/database';
@@ -46,6 +46,15 @@ describe('checked-in migration files', () => {
       '0001_mvp_schema.sql',
       '0002_constraints_and_policies.sql',
       '0003_coach_indexes.sql',
+      '0004_streak_freeze_fk.sql',
+      '0005_daily_challenges.sql',
+      '0006_solo_activities.sql',
+      '0007_admin_publishing.sql',
+      '0008_friends.sql',
+      '0009_invite_redemption.sql',
+      '0010_multiplayer.sql',
+      '0011_engagement_privacy.sql',
+      '0012_activity_review_metadata.sql',
     ]);
 
     const journal = JSON.parse(
@@ -56,6 +65,15 @@ describe('checked-in migration files', () => {
       '0001_mvp_schema',
       '0002_constraints_and_policies',
       '0003_coach_indexes',
+      '0004_streak_freeze_fk',
+      '0005_daily_challenges',
+      '0006_solo_activities',
+      '0007_admin_publishing',
+      '0008_friends',
+      '0009_invite_redemption',
+      '0010_multiplayer',
+      '0011_engagement_privacy',
+      '0012_activity_review_metadata',
     ]);
   });
 
@@ -66,8 +84,8 @@ describe('checked-in migration files', () => {
 });
 
 describe('after applying every migration to an empty database', () => {
-  it('creates exactly the 21 MVP tables and nothing from a later phase', async () => {
-    expect(await tableNames()).toEqual([...MVP_TABLE_NAMES].sort());
+  it('creates all MVP and implemented Alpha tables', async () => {
+    expect(await tableNames()).toEqual([...MVP_TABLE_NAMES, ...ALPHA_TABLE_NAMES].sort());
   });
 
   it('creates all 15 enum types with the documented values', async () => {
@@ -80,7 +98,15 @@ describe('after applying every migration to an empty database', () => {
           group by t.typname
           order by t.typname`,
     );
-    expect(rows.map((row) => row.typname)).toEqual([...MVP_ENUM_NAMES].sort());
+    expect(rows.map((row) => row.typname)).toEqual(
+      [
+        ...MVP_ENUM_NAMES,
+        'solo_activity_kind',
+        'friendship_status',
+        'invite_purpose',
+        'lobby_status',
+      ].sort(),
+    );
 
     const byName = new Map(rows.map((row) => [row.typname, row.labels]));
     expect(byName.get('session_status')).toEqual([
@@ -170,7 +196,7 @@ describe('db:reset (ADR-029: how a migration is reversed in local)', () => {
 
       await runMigrations(ctx.db);
       expect(await tableNames(), `after re-apply, round ${round}`).toEqual(
-        [...MVP_TABLE_NAMES].sort(),
+        [...MVP_TABLE_NAMES, ...ALPHA_TABLE_NAMES].sort(),
       );
     }
   });

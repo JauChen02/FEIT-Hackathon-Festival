@@ -1,0 +1,2 @@
+ALTER TABLE "invite_links" ADD COLUMN "redeemed_by" uuid;--> statement-breakpoint
+ALTER TABLE "invite_links" ADD CONSTRAINT "invite_links_redeemed_by_users_id_fk" FOREIGN KEY ("redeemed_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

@@ -26,6 +26,7 @@ import {
   learningEvents,
   pointLedger,
   skillUpdates,
+  streakDays,
   users,
 } from '@learnarena/db/schema';
 import { sumLedgerPoints } from '@learnarena/db';
@@ -198,11 +199,11 @@ describe("a completed session's database state", () => {
     // is a weak category and the session is snapshotted WEAK (§11.8).
     // Streak stays 1.0 until Phase 2; friend and event are 1.0 by §10.1.
     expect(breakdown.multipliers).toMatchObject({
-      streak: 1,
+      streak: 1.02,
       friend: 1,
       weakness: 1.25,
       event: 1,
-      session: '1.25',
+      session: '1.275',
     });
   });
 
@@ -267,7 +268,7 @@ describe("a completed session's database state", () => {
 });
 
 describe('the awarded points (§10)', () => {
-  it('scores a perfect, instant first session at 1594 (1275 × the 1.25 weak tier)', async () => {
+  it('scores a perfect, instant first session at 1626 (1275 × 1.02 streak × 1.25 weak tier)', async () => {
     // Ten correct answers with the full window left → speed factor 1.0,
     // q_base 100 each, combos 0..9, plus the 50 completion bonus = 1275
     // combo-adjusted. The learner has never played math, so §11.4 scores it
@@ -279,9 +280,9 @@ describe('the awarded points (§10)', () => {
     expect(breakdown.rawBasePoints).toBe('1050');
     expect(breakdown.comboAdjustedPoints).toBe('1275');
     expect(breakdown.multipliers.weakness).toBe(1.25);
-    expect(breakdown.uncappedPoints).toBe('1593.75');
+    expect(breakdown.uncappedPoints).toBe('1625.625');
     expect(breakdown.capApplied).toBe(false);
-    expect(completed.body.finalPoints).toBe(1594);
+    expect(completed.body.finalPoints).toBe(1626);
   });
 
   it('awards only the completion bonus when every answer is wrong', async () => {
@@ -290,7 +291,7 @@ describe('the awarded points (§10)', () => {
 
     const breakdown = completed.body.pointsBreakdown as PointsBreakdown;
     expect(breakdown.rawBasePoints).toBe(String(COMPLETION_BONUS));
-    expect(completed.body.finalPoints).toBe(63);
+    expect(completed.body.finalPoints).toBe(64);
   });
 
   it('reflects the combo reset in the breakdown', async () => {
@@ -323,6 +324,9 @@ describe('the awarded points (§10)', () => {
     const completed = await complete(created.body.sessionId);
     expect(completed.status).toBe(200);
     expect(completed.body.isQualifying).toBe(false);
+    expect(
+      await ctx.db.select().from(streakDays).where(eq(streakDays.userId, currentUserId)),
+    ).toHaveLength(0);
     // §10.4: points are still awarded for a completed session.
     expect(completed.body.finalPoints).toBeGreaterThan(0);
   });
@@ -538,4 +542,33 @@ describe('ownership and state', () => {
       .where(eq(pointLedger.sessionId, created.body.sessionId));
     expect(rows!.n).toBe(0);
   });
+});
+
+it('restores a missing result cache exactly from canonical history without re-awarding', async () => {
+  const { sessionId, completed } = await playAndComplete(
+    'cache_recovery',
+    (position) => position <= 6,
+  );
+  const [before] = await ctx.db.select().from(gameSessions).where(eq(gameSessions.id, sessionId));
+  const ledgerBefore = await ctx.db
+    .select()
+    .from(pointLedger)
+    .where(eq(pointLedger.sessionId, sessionId));
+  const daysBefore = await ctx.db
+    .select()
+    .from(streakDays)
+    .where(eq(streakDays.userId, currentUserId));
+  await ctx.db.update(gameSessions).set({ resultJson: null }).where(eq(gameSessions.id, sessionId));
+  clock.advanceDays(3);
+  const again = await complete(sessionId);
+  expect(again.status).toBe(200);
+  expect(again.body).toEqual(completed.body);
+  const [after] = await ctx.db.select().from(gameSessions).where(eq(gameSessions.id, sessionId));
+  expect(after?.resultJson).toEqual(before?.resultJson);
+  expect(
+    await ctx.db.select().from(pointLedger).where(eq(pointLedger.sessionId, sessionId)),
+  ).toEqual(ledgerBefore);
+  expect(
+    await ctx.db.select().from(streakDays).where(eq(streakDays.userId, currentUserId)),
+  ).toEqual(daysBefore);
 });

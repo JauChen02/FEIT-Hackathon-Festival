@@ -1,3 +1,4 @@
+import { importActivityFixtures } from './importActivities';
 /**
  * `pnpm db:seed` — the development seed (PLANNING.md §13.6).
  *
@@ -82,11 +83,11 @@ const GAME_TYPE_META: Record<
   { name: string; mode: 'SOLO' | 'COOP' | 'VERSUS'; enabled: boolean }
 > = {
   quiz_solo: { name: 'Solo Quiz', mode: 'SOLO', enabled: true },
-  quiz_coop: { name: 'Co-op Quiz', mode: 'COOP', enabled: false },
-  team_deathmatch: { name: 'Team Deathmatch', mode: 'VERSUS', enabled: false },
-  memory_match: { name: 'Memory Match', mode: 'SOLO', enabled: false },
-  speed_math: { name: 'Speed Math', mode: 'SOLO', enabled: false },
-  dialogue_scenario: { name: 'Dialogue Scenario', mode: 'SOLO', enabled: false },
+  quiz_coop: { name: 'Co-op Quiz', mode: 'COOP', enabled: true },
+  team_deathmatch: { name: 'Team Deathmatch', mode: 'VERSUS', enabled: true },
+  memory_match: { name: 'Memory Match', mode: 'SOLO', enabled: true },
+  speed_math: { name: 'Speed Math', mode: 'SOLO', enabled: true },
+  dialogue_scenario: { name: 'Dialogue Scenario', mode: 'SOLO', enabled: true },
 };
 
 async function seedTaxonomy(db: Database): Promise<void> {
@@ -102,7 +103,9 @@ async function seedTaxonomy(db: Database): Promise<void> {
         // as rows so the taxonomy is complete, but are DEFERRED.
         status: (LAUNCH_CATEGORY_SLUGS as readonly string[]).includes(slug)
           ? ('LAUNCH' as const)
-          : ('DEFERRED' as const),
+          : slug === 'memory'
+            ? ('ACTIVE' as const)
+            : ('DEFERRED' as const),
       })),
     )
     .onConflictDoUpdate({
@@ -129,6 +132,18 @@ async function seedTaxonomy(db: Database): Promise<void> {
       target: gameTypes.slug,
       set: { name: sql`excluded.name`, mode: sql`excluded.mode`, status: sql`excluded.status` },
     });
+
+  await db
+    .insert(gameTypeCategories)
+    .values([
+      { gameTypeId: seedIds.gameType('memory_match'), categoryId: seedIds.category('memory') },
+      { gameTypeId: seedIds.gameType('speed_math'), categoryId: seedIds.category('math') },
+      ...LAUNCH_CATEGORY_SLUGS.map((slug) => ({
+        gameTypeId: seedIds.gameType('dialogue_scenario'),
+        categoryId: seedIds.category(slug),
+      })),
+    ])
+    .onConflictDoNothing();
 
   // quiz_solo is playable in every launch category (§11.5 step 3 reads this).
   await db
@@ -499,6 +514,8 @@ export async function seedDatabase(db: Database, options: SeedOptions = {}): Pro
     dir: options.contentDir ?? CONTENT_DIR,
     forbiddenOrigins: readAppEnv() === 'production' ? ['DEV_SEED'] : [],
   });
+
+  await importActivityFixtures(db, now);
 
   const eventCount = options.skipFixtureHistories ? 0 : await seedFixtureHistories(db, now);
 

@@ -34,7 +34,7 @@ export const streakDays = pgTable(
     localDate: date('local_date').notNull(),
     source: streakDaySourceEnum('source').notNull(),
     sessionId: uuid('session_id').references(() => gameSessions.id, { onDelete: 'set null' }),
-    freezeId: uuid('freeze_id'),
+    freezeId: uuid('freeze_id').references(() => streakFreezes.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

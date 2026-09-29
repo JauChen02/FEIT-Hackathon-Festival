@@ -46,7 +46,26 @@ export const GET = route({ name: 'GET /api/me/history' }, async ({ request, requ
   const page = rows.slice(0, PAGE_SIZE);
   const sessions: HistoryItem[] = await Promise.all(
     page.map(async (row) => {
-      const result = row.resultJson as SessionResult | null;
+      const raw = row.resultJson as {
+        multiplayer?: boolean;
+        mode?: string;
+        players?: { userId: string; finalPoints: number }[];
+        rounds?: { perPlayer: { userId: string; correctness: number }[] }[];
+      } | null;
+      const player = raw?.multiplayer ? raw.players?.find((p) => p.userId === user.id) : null;
+      const correct =
+        raw?.rounds?.filter((r) =>
+          r.perPlayer.some((p) => p.userId === user.id && p.correctness === 1),
+        ).length ?? 0;
+      const result = raw?.multiplayer
+        ? {
+            categorySlug: raw.mode?.replaceAll('_', ' ') ?? 'Multiplayer',
+            finalPoints: player?.finalPoints ?? 0,
+            accuracy: correct / (raw.rounds?.length || 1),
+            correctCount: correct,
+            questionCount: raw.rounds?.length ?? 0,
+          }
+        : (row.resultJson as SessionResult | null);
       return {
         sessionId: row.sessionId,
         categorySlug: result?.categorySlug ?? (await categorySlugForId(db(), row.categoryId)),

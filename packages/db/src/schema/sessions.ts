@@ -1,3 +1,4 @@
+import { dailyChallenges } from './challenges';
 /**
  * Session and answer tables (PLANNING.md §14.2, "Sessions & answers" block).
  *
@@ -59,7 +60,9 @@ export const gameSessions = pgTable(
       onDelete: 'set null',
     }),
     /** [Alpha] §8.5. The daily_challenges table itself arrives in Phase 4. */
-    dailyChallengeId: uuid('daily_challenge_id'),
+    dailyChallengeId: uuid('daily_challenge_id').references(() => dailyChallenges.id, {
+      onDelete: 'restrict',
+    }),
     questionCount: smallint('question_count'),
     timeLimitMs: integer('time_limit_ms'),
     creationIdempotencyKey: uuid('creation_idempotency_key').notNull(),

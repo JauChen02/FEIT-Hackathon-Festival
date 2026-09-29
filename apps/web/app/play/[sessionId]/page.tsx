@@ -1,5 +1,6 @@
+import { ActivityClient } from './ActivityClient';
 import { redirect } from 'next/navigation';
-import { findSessionById } from '@learnarena/db';
+import { findSessionById, activityForSession } from '@learnarena/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
 import { QuizClient } from './QuizClient';
@@ -25,7 +26,7 @@ export default async function PlayPage({ params }: { params: Promise<{ sessionId
 
   // Not yours, or not there: the same outcome either way, so existence is not
   // leaked (§16.1).
-  if (!session || session.ownerId !== user.id) redirect('/home');
+  if (!session || session.ownerId !== user.id || session.mode !== 'SOLO') redirect('/home');
 
   // A finished session belongs on the results screen, not the quiz screen.
   if (session.status === 'COMPLETED') redirect(`/results/${sessionId}`);
@@ -34,7 +35,11 @@ export default async function PlayPage({ params }: { params: Promise<{ sessionId
   return (
     <main className="flex min-h-dvh justify-center p-(--spacing-gutter)">
       <div className="w-full max-w-(--container-content)">
-        <QuizClient sessionId={sessionId} />
+        {(await activityForSession(db(), sessionId)) ? (
+          <ActivityClient sessionId={sessionId} />
+        ) : (
+          <QuizClient sessionId={sessionId} />
+        )}
       </div>
     </main>
   );

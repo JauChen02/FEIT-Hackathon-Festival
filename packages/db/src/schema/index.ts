@@ -58,3 +58,35 @@ export const MVP_ENUM_NAMES = [
   'streak_day_source',
   'freeze_status',
 ] as const;
+export * from './challenges';
+export const ALPHA_TABLE_NAMES = [
+  'daily_challenges',
+  'daily_challenge_questions',
+  'activity_versions',
+  'activity_sessions',
+  'activity_assessments',
+  'admin_audit_log',
+  'friendships',
+  'user_blocks',
+  'invite_links',
+  'lobbies',
+  'lobby_members',
+  'match_results',
+  'friend_bonus_grants',
+  'coach_messages',
+  'achievements',
+  'user_achievements',
+  'event_multipliers',
+  'notification_preferences',
+  'push_subscriptions',
+  'notification_send_log',
+  'activity_events',
+  'deletion_requests',
+] as const;
+export * from './games';
+export * from './admin';
+export * from './social';
+
+export * from './multiplayer';
+
+export * from './engagement';

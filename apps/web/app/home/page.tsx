@@ -1,3 +1,9 @@
+import { headers } from 'next/headers';
+import { testClockOverride } from '@/lib/streaks/testClock';
+import { localDateFor } from '@learnarena/core';
+import { now } from '@/lib/sessions/context';
+import { readStreakState } from '@/lib/streaks/readState';
+import { StreakCard } from '@/components/ui-app/StreakCard';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { findUserById, listLaunchCategories } from '@learnarena/db';
@@ -28,6 +34,12 @@ export default async function HomePage() {
   const profile = await findUserById(db(), user.id);
   if (!profile) redirect('/onboarding');
 
+  const at =
+    testClockOverride(
+      (await headers()).get('x-test-clock'),
+      process.env.APP_ENV,
+      process.env.E2E_CLOCK_OVERRIDE,
+    ) ?? now();
   const categories = await listLaunchCategories(db());
 
   return (
@@ -40,6 +52,10 @@ export default async function HomePage() {
           totalPoints={profile.totalPointsCached}
         />
 
+        <StreakCard
+          streak={await readStreakState(db(), profile.id, localDateFor(profile.timezone, at))}
+        />
+
         <HomeClient
           categories={categories.map((category) => ({
             slug: category.slug,
@@ -49,6 +65,9 @@ export default async function HomePage() {
         />
 
         <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href="/settings">Settings</Link>
+          </Button>
           <Button asChild variant="outline" data-testid="home-skills-link">
             <Link href="/skills">Skills</Link>
           </Button>

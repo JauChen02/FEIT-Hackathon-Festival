@@ -40,3 +40,12 @@ export * from './transitions/freeze';
 export * from './transitions/recommendation';
 export * from './transitions/session';
 export * from './transitions/table';
+export * from './streaks';
+export * from './leaderboard';
+export * from './games/solo';
+export * from './schemas/admin';
+export * from './transitions/friendship';
+
+export * from './multiplayer';
+
+export * from './coach/narration';

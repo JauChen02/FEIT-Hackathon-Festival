@@ -53,7 +53,10 @@ export function CategoryPicker({ categories, startingSlug, error, onStart }: Cat
               type="button"
               variant="outline"
               data-testid={`start-${category.slug}`}
-              disabled={startingSlug !== null || category.liveQuestionCount < 10}
+              disabled={
+                startingSlug !== null ||
+                (category.slug !== 'memory' && category.liveQuestionCount < 10)
+              }
               className="h-auto justify-between py-3"
               onClick={() => onStart(category.slug)}
             >
@@ -69,7 +72,9 @@ export function CategoryPicker({ categories, startingSlug, error, onStart }: Cat
                 ) : null}
                 {startingSlug === category.slug
                   ? 'Starting…'
-                  : `${category.liveQuestionCount} questions`}
+                  : category.slug === 'memory'
+                    ? 'Sequence recall'
+                    : `${category.liveQuestionCount} questions`}
               </span>
             </Button>
           ))

@@ -17,6 +17,7 @@ import { uuidv7 } from '@learnarena/core';
 import { PG_ERROR_CODES } from '../src/errors';
 import {
   MVP_TABLE_NAMES,
+  ALPHA_TABLE_NAMES,
   gameSessions,
   learningEvents,
   pointLedger,
@@ -559,7 +560,9 @@ describe('row level security (§14.1)', () => {
     const rows = await ctx.db.execute<{ tablename: string }>(
       sql`select tablename from pg_tables where schemaname = 'public' and rowsecurity`,
     );
-    expect(rows.map((row) => row.tablename).sort()).toEqual([...MVP_TABLE_NAMES].sort());
+    expect(rows.map((row) => row.tablename).sort()).toEqual(
+      [...MVP_TABLE_NAMES, ...ALPHA_TABLE_NAMES].sort(),
+    );
   });
 
   it('defines no policies, which is what makes RLS deny-all', async () => {

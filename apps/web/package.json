@@ -13,7 +13,13 @@
     "test:integration": "vitest run",
     "test:e2e": "playwright test",
     "admin:backfill-skills": "tsx --conditions=react-server scripts/backfillSkills.ts",
-    "admin:process-skills": "tsx --conditions=react-server scripts/processPendingSkills.ts"
+    "admin:process-skills": "tsx --conditions=react-server scripts/processPendingSkills.ts",
+    "admin:rebuild-streaks": "tsx --conditions=react-server scripts/rebuildStreaks.ts",
+    "admin:rebuild-totals": "tsx --conditions=react-server scripts/rebuildTotals.ts",
+    "admin:daily-challenge": "tsx --conditions=react-server scripts/publishDailyChallenge.ts",
+    "admin:check-consistency": "tsx --conditions=react-server scripts/checkConsistency.ts",
+    "worker": "tsx --conditions=react-server scripts/worker.ts",
+    "admin:grant-role": "tsx --conditions=react-server scripts/grantRole.ts"
   },
   "dependencies": {
     "@learnarena/core": "workspace:*",
@@ -23,6 +29,8 @@
     "@sentry/nextjs": "^10.19.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.58.0",
+    "@upstash/ratelimit": "^2.2.0",
+    "@upstash/redis": "^1.39.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "inngest": "^4.21.0",
@@ -32,7 +40,9 @@
     "react-dom": "^19.2.0",
     "recharts": "^3.10.1",
     "server-only": "^0.0.1",
+    "socket.io-client": "^4.8.4",
     "tailwind-merge": "^3.3.1",
+    "web-push": "^3.6.7",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -41,6 +51,7 @@
     "@types/node": "^22.18.8",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "@types/web-push": "^3.6.4",
     "drizzle-orm": "^0.44.6",
     "eslint-config-next": "^15.5.4",
     "postgres": "^3.4.7",

@@ -192,7 +192,10 @@ export function route<
       if (isAppError(error)) {
         // Expected outcomes (401, 409, …) are information, not failures.
         log.info({ code: error.code, status: error.status }, 'request rejected');
-        return jsonResponse(error.toEnvelope(), error.status, requestId);
+        const response = jsonResponse(error.toEnvelope(), error.status, requestId);
+        if (error.code === 'RATE_LIMITED')
+          response.headers.set('Retry-After', String(error.details?.retryAfter ?? 60));
+        return response;
       }
 
       log.error({ err: error }, 'unhandled error in route handler');

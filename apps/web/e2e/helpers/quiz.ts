@@ -55,6 +55,24 @@ export async function answerCurrentQuestion(page: Page): Promise<void> {
  * results"), so there is no separate finish click on the happy path.
  */
 export async function playWholeQuiz(page: Page): Promise<void> {
+  // Alpha recommendations may lead to memory, which shares the completion flow.
+  await expect(
+    page.getByTestId('question-prompt').or(page.getByTestId('memory-sequence')),
+  ).toBeVisible();
+  if (await page.getByTestId('memory-sequence').isVisible()) {
+    for (let round = 0; round < 5; round++) {
+      const sequence = await page.getByTestId('memory-sequence').innerText();
+      await expect(page.getByTestId('memory-sequence')).toHaveCount(0);
+      await page.getByLabel('Your answer').fill(sequence);
+      await page.getByRole('button', { name: 'Check answer' }).click();
+      await expect(page.getByTestId('activity-feedback')).toBeVisible();
+      await page
+        .getByRole('button', { name: round === 4 ? 'See results' : 'Next', exact: true })
+        .click();
+    }
+    await expect(page).toHaveURL(/\/results\//);
+    return;
+  }
   for (let i = 0; i < 10; i += 1) {
     await answerCurrentQuestion(page);
     await page.getByTestId('continue').click();

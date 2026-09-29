@@ -29,6 +29,69 @@
       "when": 1790689902585,
       "tag": "0003_coach_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790694187448,
+      "tag": "0004_streak_freeze_fk",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790694653821,
+      "tag": "0005_daily_challenges",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790695193522,
+      "tag": "0006_solo_activities",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790695814733,
+      "tag": "0007_admin_publishing",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790696182679,
+      "tag": "0008_friends",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790696462907,
+      "tag": "0009_invite_redemption",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790696682656,
+      "tag": "0010_multiplayer",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790697728719,
+      "tag": "0011_engagement_privacy",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790698563847,
+      "tag": "0012_activity_review_metadata",
+      "breakpoints": true
     }
   ]
 }

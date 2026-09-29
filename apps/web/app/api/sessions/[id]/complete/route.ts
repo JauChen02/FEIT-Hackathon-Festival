@@ -26,6 +26,7 @@ export const POST = route(
       {
         sessionId: result.sessionId,
         finalPoints: result.finalPoints,
+        dailyChallengeBonus: result.dailyChallengeBonus ?? 0,
         pointsBreakdown: result.pointsBreakdown,
         streak: result.streak,
         recommendationCompleted: result.recommendationCompleted,

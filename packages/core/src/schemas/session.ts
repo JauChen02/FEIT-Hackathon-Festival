@@ -8,9 +8,11 @@ import { z } from 'zod';
 
 /** §16.2: `{gameType:"quiz_solo", categorySlug}`. */
 export const createSessionSchema = z.object({
+  dailyChallengeId: z.uuid().optional(),
   // Only `quiz_solo` is ENABLED in MVP; anything else is a client error rather
   // than a 404, because the value is not a resource identifier.
-  gameType: z.literal('quiz_solo', { message: 'Only quiz_solo sessions can be created.' }),
+  gameType: z.enum(['quiz_solo', 'speed_math', 'memory_match', 'dialogue_scenario']),
+  activityVersionId: z.uuid().optional(),
   categorySlug: z.string().regex(/^[a-z]+$/, { message: 'categorySlug must be a lowercase slug.' }),
   /**
    * Links the session to today's recommendation, which is what earns the ×1.5
@@ -28,7 +30,7 @@ export type CreateSessionRequest = z.infer<typeof createSessionSchema>;
  * MCQ sends the chosen option id; NUMERIC sends the raw text the learner
  * typed, un-normalised, so grading (not the client) decides what it means.
  */
-export const mcqResponseSchema = z.object({ optionId: z.string().min(1).max(8) });
+export const mcqResponseSchema = z.object({ optionId: z.string().min(1).max(64) });
 export const numericResponseSchema = z.object({ value: z.string().min(1).max(64) });
 
 export const answerResponseSchema = z.union([mcqResponseSchema, numericResponseSchema]);

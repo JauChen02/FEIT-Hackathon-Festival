@@ -1,0 +1,29 @@
+{
+  "name": "@learnarena/realtime",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src tests",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@learnarena/core": "workspace:*",
+    "@learnarena/db": "workspace:*",
+    "drizzle-orm": "^0.44.6",
+    "inngest": "^3.54.2",
+    "socket.io": "^4.8.1",
+    "tsx": "^4.20.6",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.8",
+    "socket.io-client": "^4.8.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

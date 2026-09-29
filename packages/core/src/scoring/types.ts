@@ -1,3 +1,4 @@
+import type { SessionResult } from '../api/session';
 /**
  * Scoring types (PLANNING.md §10).
  *
@@ -27,6 +28,7 @@ export interface SessionMultipliers {
 }
 
 export interface ComputePointsInput {
+  comboEnabled?: boolean;
   /** In presentation order; combo is derived from this order (§10.1). */
   questions: readonly QuestionOutcome[];
   /**
@@ -55,6 +57,8 @@ export interface QuestionBreakdown {
  * shown to the user (§10.4), so it has to be readable as well as complete.
  */
 export interface PointsBreakdown {
+  completionContext?: Pick<SessionResult, 'streak' | 'weakness' | 'recommendationCompleted'>;
+  event?: { id: string; name: string; multiplier: number };
   perQuestion: QuestionBreakdown[];
   /** `Σ q_base + completion_bonus` — the base *before* combo (§10.2 step 3). */
   rawBasePoints: string;

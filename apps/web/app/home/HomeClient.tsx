@@ -1,4 +1,6 @@
 'use client';
+import { DailyChallengeCard } from '@/components/ui-app/DailyChallengeCard';
+import type { DailyChallengeResponse } from '@learnarena/core';
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -29,6 +31,12 @@ interface OpenSession {
 
 export function HomeClient({ categories }: { categories: readonly CategoryOption[] }) {
   const router = useRouter();
+  const [challenge, setChallenge] = useState<DailyChallengeResponse['challenge']>(null);
+  useEffect(() => {
+    void apiFetch<DailyChallengeResponse>('/api/daily-challenge').then((result) => {
+      if (result.ok) setChallenge(result.data.challenge);
+    });
+  }, []);
   const [startingSlug, setStartingSlug] = useState<string | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [openSession, setOpenSession] = useState<OpenSession | null>(null);
@@ -60,7 +68,7 @@ export function HomeClient({ categories }: { categories: readonly CategoryOption
     })();
   }, [setRecommendation, setTiers]);
 
-  async function start(slug: string, recommendationId?: string) {
+  async function start(slug: string, recommendationId?: string, dailyChallengeId?: string) {
     setStartingSlug(slug);
     setError(null);
 
@@ -70,7 +78,8 @@ export function HomeClient({ categories }: { categories: readonly CategoryOption
       // than opening a second one.
       headers: { 'idempotency-key': uuidv7() },
       body: JSON.stringify({
-        gameType: 'quiz_solo',
+        gameType: slug === 'memory' ? 'memory_match' : 'quiz_solo',
+        ...(dailyChallengeId ? { dailyChallengeId } : {}),
         categorySlug: slug,
         // §11.8: linking the session is what earns the ×1.5 tier.
         ...(recommendationId ? { recommendationId } : {}),
@@ -124,6 +133,13 @@ export function HomeClient({ categories }: { categories: readonly CategoryOption
 
   return (
     <div className="flex flex-col gap-6">
+      {challenge ? (
+        <DailyChallengeCard
+          challenge={challenge}
+          busy={startingSlug !== null}
+          onStart={() => void start(challenge.categorySlug, undefined, challenge.id)}
+        />
+      ) : null}
       {recommendation ? (
         <FocusCard
           recommendation={recommendation}

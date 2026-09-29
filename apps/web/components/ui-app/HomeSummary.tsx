@@ -36,10 +36,6 @@ export function HomeSummary({ displayName, username, timezone, totalPoints }: Ho
               {totalPoints.toLocaleString()}
             </dd>
           </div>
-          <div>
-            <dt className="text-muted-foreground">Streak</dt>
-            <dd className="text-2xl font-semibold">—</dd>
-          </div>
         </dl>
       </CardContent>
     </Card>

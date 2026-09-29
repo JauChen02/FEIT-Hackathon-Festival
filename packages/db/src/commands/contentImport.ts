@@ -78,6 +78,7 @@ async function collectJsonFiles(dir: string): Promise<string[]> {
   return entries
     .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
     .map((entry) => path.join(entry.parentPath, entry.name))
+    .filter((file) => !file.includes(`${path.sep}activities${path.sep}`))
     .sort();
 }
 

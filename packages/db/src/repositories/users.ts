@@ -103,3 +103,44 @@ export async function insertOnboardedUser(
 export function isOnboarded(user: UserRecord | undefined): user is UserRecord {
   return user !== undefined && user.onboardingCompletedAt !== null;
 }
+
+/** Caller holds the user lock, serializing timezone edits and completion. */
+export async function updateProfile(
+  db: Database,
+  userId: string,
+  input: { displayName?: string | undefined; timezone?: string | undefined },
+  now: Date,
+) {
+  const { userTimezoneChanges } = await import('../schema/index');
+  const { desc } = await import('drizzle-orm');
+  const { AppError, uuidv7 } = await import('@learnarena/core');
+  const [user] = await db.select().from(users).where(eq(users.id, userId)).for('update');
+  if (!user) throw new AppError('NOT_FOUND');
+  if (input.timezone && input.timezone !== user.timezone) {
+    const [last] = await db
+      .select()
+      .from(userTimezoneChanges)
+      .where(eq(userTimezoneChanges.userId, userId))
+      .orderBy(desc(userTimezoneChanges.changedAt))
+      .limit(1);
+    if (last && now.getTime() - last.changedAt.getTime() < 86_400_000) {
+      throw new AppError('TIMEZONE_CHANGE_COOLDOWN', {
+        details: { availableAt: new Date(last.changedAt.getTime() + 86_400_000).toISOString() },
+      });
+    }
+    await db
+      .insert(userTimezoneChanges)
+      .values({
+        id: uuidv7(),
+        userId,
+        oldTz: user.timezone,
+        newTz: input.timezone,
+        changedAt: now,
+      });
+  }
+  await db
+    .update(users)
+    .set({ ...input, updatedAt: now })
+    .where(eq(users.id, userId));
+  return findUserById(db, userId);
+}

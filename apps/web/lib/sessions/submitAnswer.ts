@@ -175,6 +175,11 @@ export async function submitAnswer(
       const winner = stored.find(
         (answer) => answer.questionVersionId === target.questionVersionId,
       )!;
+      if (
+        winner.responseJson === null ||
+        canonicalJson(winner.responseJson) !== canonicalJson(request.response)
+      )
+        throw new AppError('ANSWER_ALREADY_SUBMITTED');
       return buildResponse({
         correctness: Number(winner.correctness),
         correctAnswer: correctAnswerFor(version),

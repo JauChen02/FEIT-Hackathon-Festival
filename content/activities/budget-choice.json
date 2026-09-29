@@ -1,0 +1,49 @@
+{
+  "slug": "budget-choice",
+  "name": "Plan a small project",
+  "kind": "dialogue_scenario",
+  "versionNumber": 1,
+  "origin": "DEV_SEED",
+  "authorUsername": "seed_author",
+  "reviewerUsername": "seed_reviewer",
+  "content": {
+    "start": "start",
+    "nodes": [
+      {
+        "id": "start",
+        "line": "A project costs $80 and your budget is $100. A 25% contingency is required. Can you afford it?",
+        "categorySlug": "math",
+        "choices": [
+          {
+            "id": "yes",
+            "text": "Yes, $80 plus $20 contingency totals $100.",
+            "correctness": 1,
+            "feedback": "25% of $80 is $20. The total fits the budget exactly.",
+            "nextNodeId": "safe"
+          },
+          {
+            "id": "no",
+            "text": "No, the contingency must be $25.",
+            "correctness": 0,
+            "feedback": "The percentage applies to the project cost, so the contingency is $20.",
+            "nextNodeId": "retry"
+          }
+        ]
+      },
+      {
+        "id": "safe",
+        "line": "You made a well-reasoned choice.",
+        "categorySlug": "math",
+        "ending": true,
+        "bestEnding": true
+      },
+      {
+        "id": "retry",
+        "line": "Reflect on the feedback and try the scenario again.",
+        "categorySlug": "math",
+        "ending": true,
+        "bestEnding": false
+      }
+    ]
+  }
+}

@@ -183,6 +183,7 @@ export interface UnprocessedEvent {
 export async function listUnprocessedEvents(
   db: Database,
   sessionId: string,
+  userId?: string,
 ): Promise<UnprocessedEvent[]> {
   const rows = await db
     .select({
@@ -194,7 +195,13 @@ export async function listUnprocessedEvents(
     })
     .from(learningEvents)
     .leftJoin(skillUpdates, eq(skillUpdates.learningEventId, learningEvents.id))
-    .where(and(eq(learningEvents.sessionId, sessionId), isNull(skillUpdates.id)))
+    .where(
+      and(
+        eq(learningEvents.sessionId, sessionId),
+        isNull(skillUpdates.id),
+        userId ? eq(learningEvents.userId, userId) : undefined,
+      ),
+    )
     .orderBy(asc(learningEvents.occurredAt), asc(learningEvents.id));
 
   return rows.map((row) => ({
@@ -377,7 +384,7 @@ export async function listLaunchCategoryRows(db: Database) {
   return db
     .select({ id: categories.id, slug: categories.slug, name: categories.name })
     .from(categories)
-    .where(eq(categories.status, 'LAUNCH'))
+    .where(inArray(categories.status, ['LAUNCH', 'ACTIVE']))
     .orderBy(asc(categories.slug));
 }
 

@@ -1,3 +1,9 @@
+import { localDateFor, profileUpdateSchema, weekKeyUtc } from '@learnarena/core';
+import { updateProfile, weeklyPoints } from '@learnarena/db';
+import { requireOnboarded } from '@/lib/auth/guards';
+import { db } from '@/lib/db';
+import { now } from '@/lib/sessions/context';
+import { readStreakState } from '@/lib/streaks/readState';
 import type { MeResponse } from '@learnarena/core';
 import { loadOptionalUser } from '@/lib/auth/guards';
 import { ok, route } from '@/lib/api/handler';
@@ -35,9 +41,18 @@ export const GET = route({ name: 'GET /api/me' }, async ({ request, requestId })
         totalPoints: user.totalPointsCached,
         onboardingCompletedAt: user.onboardingCompletedAt!.toISOString(),
       },
-      streak: null,
-      weeklyPoints: 0,
+      streak: await readStreakState(db(), user.id, localDateFor(user.timezone, now(request))),
+      weeklyPoints: await weeklyPoints(db(), weekKeyUtc(now(request)), user.id),
     } satisfies MeResponse,
     requestId,
   );
 });
+
+export const PATCH = route(
+  { name: 'PATCH /api/me', schema: profileUpdateSchema },
+  async ({ request, body, requestId }) => {
+    const { user } = await requireOnboarded(request);
+    const profile = await db().transaction((tx) => updateProfile(tx, user.id, body, now(request)));
+    return ok({ displayName: profile!.displayName, timezone: profile!.timezone }, requestId);
+  },
+);

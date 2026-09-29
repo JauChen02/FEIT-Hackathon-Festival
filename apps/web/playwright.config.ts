@@ -31,23 +31,38 @@ export default defineConfig({
 
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 
-  webServer: {
-    // `next start` rather than `next dev`: the E2E suite should exercise the
-    // same build CI produces, and dev-mode compilation makes the first
-    // navigation flaky.
-    command: 'pnpm build && pnpm start',
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 240_000,
-    stdout: 'pipe',
-    stderr: 'pipe',
-    env: {
-      APP_ENV: process.env.APP_ENV ?? 'local',
-      DATABASE_URL: process.env.DATABASE_URL ?? '',
-      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
-      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
-      NEXT_PUBLIC_SITE_URL: baseURL,
+  webServer: [
+    {
+      // `next start` rather than `next dev`: the E2E suite should exercise the
+      // same build CI produces, and dev-mode compilation makes the first
+      // navigation flaky.
+      command: 'pnpm build && pnpm start',
+      url: baseURL,
+      reuseExistingServer: !process.env.CI,
+      timeout: 240_000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+      env: {
+        E2E_CLOCK_OVERRIDE: '1',
+        UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL ?? '',
+        UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN ?? '',
+        REALTIME_TOKEN_SECRET: process.env.REALTIME_TOKEN_SECRET ?? '',
+        NEXT_PUBLIC_REALTIME_URL: process.env.NEXT_PUBLIC_REALTIME_URL ?? 'http://localhost:3001',
+        APP_ENV: process.env.APP_ENV ?? 'local',
+        DATABASE_URL: process.env.DATABASE_URL ?? '',
+        NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
+        SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+        NEXT_PUBLIC_SITE_URL: baseURL,
+      },
     },
-  },
+    {
+      command: 'pnpm --filter @learnarena/realtime start',
+      url: process.env.NEXT_PUBLIC_REALTIME_URL ?? 'http://localhost:3001',
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+  ],
 });

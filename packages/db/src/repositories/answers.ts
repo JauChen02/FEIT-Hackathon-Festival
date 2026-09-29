@@ -1,3 +1,4 @@
+import { recordLearningEvent } from '../learning/recordEvent';
 /**
  * Answer + learning event repository (PLANNING.md §9, §14.2).
  *
@@ -112,7 +113,7 @@ export async function recordResolvedQuestion(
     clientSentAt: input.clientSentAt,
   });
 
-  await tx.insert(learningEvents).values({
+  await recordLearningEvent(tx, {
     id: learningEventId,
     userId: input.userId,
     sessionId: input.sessionId,

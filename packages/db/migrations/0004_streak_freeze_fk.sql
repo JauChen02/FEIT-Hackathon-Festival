@@ -1,0 +1,1 @@
+ALTER TABLE "streak_days" ADD CONSTRAINT "streak_days_freeze_id_streak_freezes_id_fk" FOREIGN KEY ("freeze_id") REFERENCES "public"."streak_freezes"("id") ON DELETE set null ON UPDATE no action;

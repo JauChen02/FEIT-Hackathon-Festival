@@ -1,3 +1,6 @@
+import { rateLimit } from '@/lib/security/rateLimit';
+import { activityForSession, resolveActivity } from '@learnarena/db';
+import { db } from '@/lib/db';
 import { z } from 'zod';
 import { submitAnswerSchema } from '@learnarena/core';
 import { ok, route } from '@/lib/api/handler';
@@ -21,8 +24,23 @@ export const POST = route(
   { name: 'POST /api/sessions/:id/answer', schema: submitAnswerSchema, params: paramsSchema },
   async ({ request, requestId, params, body }) => {
     const { session, now } = await loadSessionContext(request, params.id);
+    await rateLimit(session.ownerId, 'answer');
     // `now` was captured before any I/O, so the speed factor reflects when the
     // request arrived rather than how long grading took (§5.13, §17.3).
+    if (await activityForSession(db(), session.id))
+      return ok(
+        await db().transaction((tx) =>
+          resolveActivity(
+            tx,
+            session.id,
+            session.ownerId,
+            body.questionVersionId,
+            body.response,
+            now,
+          ),
+        ),
+        requestId,
+      );
     return ok(await submitAnswer(session, body, now), requestId);
   },
 );

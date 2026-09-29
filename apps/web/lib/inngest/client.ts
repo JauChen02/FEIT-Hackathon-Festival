@@ -35,6 +35,6 @@ export const inngest = new Inngest({
  * `sessions/reconcile` re-sends collapse into one delivery — which is what
  * makes re-sending safe (§18.1, "Background jobs").
  */
-export function sessionTerminalEventId(sessionId: string): string {
-  return `session-terminal:${sessionId}`;
+export function sessionTerminalEventId(sessionId: string, userId?: string): string {
+  return `session-terminal:${sessionId}${userId ? `:${userId}` : ''}`;
 }

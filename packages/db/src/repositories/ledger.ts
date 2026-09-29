@@ -106,3 +106,12 @@ export async function sumLedgerPoints(db: Database, userId: string): Promise<num
     .where(eq(pointLedger.userId, userId));
   return rows[0]?.total ?? 0;
 }
+
+export async function rebuildPointsTotal(db: Database, userId: string, now: Date): Promise<number> {
+  const total = await sumLedgerPoints(db, userId);
+  await db
+    .update(users)
+    .set({ totalPointsCached: total, updatedAt: now })
+    .where(eq(users.id, userId));
+  return total;
+}

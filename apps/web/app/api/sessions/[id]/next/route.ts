@@ -1,3 +1,5 @@
+import { activityForSession, serveActivity } from '@learnarena/db';
+import { db } from '@/lib/db';
 import { z } from 'zod';
 import { ok, route } from '@/lib/api/handler';
 import { loadSessionContext } from '@/lib/sessions/context';
@@ -21,6 +23,11 @@ export const POST = route(
   { name: 'POST /api/sessions/:id/next', params: paramsSchema },
   async ({ request, requestId, params }) => {
     const { session, now } = await loadSessionContext(request, params.id);
+    if (await activityForSession(db(), session.id))
+      return ok(
+        await db().transaction((tx) => serveActivity(tx, session.id, session.ownerId, now)),
+        requestId,
+      );
     return ok(await serveNextQuestion(session, now), requestId);
   },
 );

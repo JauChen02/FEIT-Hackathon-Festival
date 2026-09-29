@@ -1,0 +1,49 @@
+{
+  "slug": "logical-evidence",
+  "name": "Follow the evidence",
+  "kind": "dialogue_scenario",
+  "versionNumber": 1,
+  "origin": "DEV_SEED",
+  "authorUsername": "seed_author",
+  "reviewerUsername": "seed_reviewer",
+  "content": {
+    "start": "start",
+    "nodes": [
+      {
+        "id": "start",
+        "line": "Two observations support a claim. Does that prove it is always true?",
+        "categorySlug": "logic",
+        "choices": [
+          {
+            "id": "test",
+            "text": "Look for counterexamples and test more cases.",
+            "correctness": 1,
+            "feedback": "Testing counterexamples helps distinguish evidence from proof.",
+            "nextNodeId": "safe"
+          },
+          {
+            "id": "assume",
+            "text": "Assume the claim is universally true.",
+            "correctness": 0,
+            "feedback": "A few observations do not establish a universal claim.",
+            "nextNodeId": "retry"
+          }
+        ]
+      },
+      {
+        "id": "safe",
+        "line": "You made a well-reasoned choice.",
+        "categorySlug": "logic",
+        "ending": true,
+        "bestEnding": true
+      },
+      {
+        "id": "retry",
+        "line": "Reflect on the feedback and try the scenario again.",
+        "categorySlug": "logic",
+        "ending": true,
+        "bestEnding": false
+      }
+    ]
+  }
+}

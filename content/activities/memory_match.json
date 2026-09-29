@@ -1,0 +1,13 @@
+{
+  "slug": "memory_match",
+  "name": "Sequence recall",
+  "kind": "memory_match",
+  "versionNumber": 1,
+  "origin": "DEV_SEED",
+  "authorUsername": "seed_author",
+  "reviewerUsername": "seed_reviewer",
+  "content": {
+    "difficulty": 2,
+    "rounds": 5
+  }
+}

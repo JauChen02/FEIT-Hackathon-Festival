@@ -2,6 +2,7 @@ import 'server-only';
 import { applyElo, systemClock } from '@learnarena/core';
 import {
   findSkillProfile,
+  lockStreakUser,
   insertSkillUpdate,
   listSessionsMissingSkillUpdates,
   listUnprocessedEvents,
@@ -40,92 +41,97 @@ export async function runProcessSession(
   userId: string,
   at: Date = systemClock.now(),
 ): Promise<ProcessSessionResult> {
-  // §11.3: "Events are applied in occurred_at order (ties by event id), one at
-  // a time." The query returns only events with no skill_updates row, so a
-  // re-run sees an empty list and does nothing (§18.1).
-  const events = await listUnprocessedEvents(db(), sessionId);
+  return db().transaction(async (tx) => {
+    await lockStreakUser(tx, userId);
+    // §11.3: "Events are applied in occurred_at order (ties by event id), one at
+    // a time." The query returns only events with no skill_updates row, so a
+    // re-run sees an empty list and does nothing (§18.1).
+    const events = await listUnprocessedEvents(tx, sessionId, userId);
 
-  if (events.length === 0) {
-    // Still stamp the column: a cancelled session has no events at all, and
-    // without this `sessions/reconcile` would chase it forever (ADR-042).
-    await markPostProcessed(db(), sessionId, at);
-    return { eventsApplied: 0, categoriesTouched: 0, alreadyProcessed: true };
-  }
-
-  // Carry the running rating per category across the whole run rather than
-  // re-reading between events — the chain is sequential by definition.
-  const running = new Map<
-    string,
-    { rating: number; lifetimeEventCount: number; lastEventAt: Date }
-  >();
-
-  let applied = 0;
-
-  for (const event of events) {
-    let state = running.get(event.categoryId);
-    if (!state) {
-      const profile = await findSkillProfile(db(), userId, event.categoryId);
-      state = {
-        // §11.3: "Per (user, category), starting rating 1000."
-        rating: profile?.rating ?? 1000,
-        lifetimeEventCount: profile?.lifetimeEventCount ?? 0,
-        lastEventAt: event.occurredAt,
-      };
-      running.set(event.categoryId, state);
+    if (events.length === 0) {
+      // Still stamp the column: a cancelled session has no events at all, and
+      // without this `sessions/reconcile` would chase it forever (ADR-042).
+      if ((await listUnprocessedEvents(tx, sessionId)).length === 0)
+        await markPostProcessed(tx, sessionId, at);
+      return { eventsApplied: 0, categoriesTouched: 0, alreadyProcessed: true };
     }
 
-    const application = applyElo({
-      userRating: state.rating,
-      itemRating: event.difficultyRating,
-      correctness: event.correctness,
-      // §11.3: the K factor uses the count *before* this event.
-      lifetimeEventCountBefore: state.lifetimeEventCount,
-    });
+    // Carry the running rating per category across the whole run rather than
+    // re-reading between events — the chain is sequential by definition.
+    const running = new Map<
+      string,
+      { rating: number; lifetimeEventCount: number; lastEventAt: Date }
+    >();
 
-    const wrote = await insertSkillUpdate(db(), {
-      learningEventId: event.id,
-      userId,
-      categoryId: event.categoryId,
-      application,
-      now: at,
-    });
+    let applied = 0;
 
-    if (!wrote) {
-      // A concurrent run applied this event first. Its rating_after is the
-      // truth; skip rather than double-count.
-      logger.debug({ event_id: event.id }, 'coach.skill_update_already_applied');
-      continue;
+    for (const event of events) {
+      let state = running.get(event.categoryId);
+      if (!state) {
+        const profile = await findSkillProfile(tx, userId, event.categoryId);
+        state = {
+          // §11.3: "Per (user, category), starting rating 1000."
+          rating: profile?.rating ?? 1000,
+          lifetimeEventCount: profile?.lifetimeEventCount ?? 0,
+          lastEventAt: event.occurredAt,
+        };
+        running.set(event.categoryId, state);
+      }
+
+      const application = applyElo({
+        userRating: state.rating,
+        itemRating: event.difficultyRating,
+        correctness: event.correctness,
+        // §11.3: the K factor uses the count *before* this event.
+        lifetimeEventCountBefore: state.lifetimeEventCount,
+      });
+
+      const wrote = await insertSkillUpdate(tx, {
+        learningEventId: event.id,
+        userId,
+        categoryId: event.categoryId,
+        application,
+        now: at,
+      });
+
+      if (!wrote) {
+        // A concurrent run applied this event first. Its rating_after is the
+        // truth; skip rather than double-count.
+        logger.debug({ event_id: event.id }, 'coach.skill_update_already_applied');
+        continue;
+      }
+
+      state.rating = application.ratingAfter;
+      state.lifetimeEventCount += 1;
+      state.lastEventAt = event.occurredAt;
+      applied += 1;
     }
 
-    state.rating = application.ratingAfter;
-    state.lifetimeEventCount += 1;
-    state.lastEventAt = event.occurredAt;
-    applied += 1;
-  }
+    for (const [categoryId, state] of running) {
+      await upsertSkillProfile(tx, {
+        userId,
+        categoryId,
+        rating: state.rating,
+        lifetimeEventCount: state.lifetimeEventCount,
+        lastEventAt: state.lastEventAt,
+        now: at,
+      });
+    }
 
-  for (const [categoryId, state] of running) {
-    await upsertSkillProfile(db(), {
-      userId,
-      categoryId,
-      rating: state.rating,
-      lifetimeEventCount: state.lifetimeEventCount,
-      lastEventAt: state.lastEventAt,
-      now: at,
-    });
-  }
+    if ((await listUnprocessedEvents(tx, sessionId)).length === 0)
+      await markPostProcessed(tx, sessionId, at);
 
-  await markPostProcessed(db(), sessionId, at);
+    logger.info(
+      { session_id: sessionId, user_id: userId, events_applied: applied },
+      'coach.session_processed',
+    );
 
-  logger.info(
-    { session_id: sessionId, user_id: userId, events_applied: applied },
-    'coach.session_processed',
-  );
-
-  return {
-    eventsApplied: applied,
-    categoriesTouched: running.size,
-    alreadyProcessed: applied === 0,
-  };
+    return {
+      eventsApplied: applied,
+      categoriesTouched: running.size,
+      alreadyProcessed: applied === 0,
+    };
+  });
 }
 
 export const processSession = inngest.createFunction(

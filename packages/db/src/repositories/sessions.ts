@@ -27,6 +27,7 @@ export interface SessionRecord {
   weaknessTier: 'NONE' | 'WEAK' | 'RECOMMENDED';
   weaknessSnapshotJson: unknown;
   recommendationId: string | null;
+  dailyChallengeId: string | null;
   questionCount: number | null;
   timeLimitMs: number | null;
   localDate: string | null;
@@ -49,6 +50,7 @@ const SESSION_COLUMNS = {
   weaknessTier: gameSessions.weaknessTier,
   weaknessSnapshotJson: gameSessions.weaknessSnapshotJson,
   recommendationId: gameSessions.recommendationId,
+  dailyChallengeId: gameSessions.dailyChallengeId,
   questionCount: gameSessions.questionCount,
   timeLimitMs: gameSessions.timeLimitMs,
   localDate: gameSessions.localDate,
@@ -129,7 +131,7 @@ export interface CreateSessionInput {
   id: string;
   ownerId: string;
   gameTypeId: string;
-  categoryId: string;
+  categoryId: string | null;
   questionCount: number;
   timeLimitMs: number;
   creationIdempotencyKey: string;
@@ -137,6 +139,7 @@ export interface CreateSessionInput {
   weaknessSnapshot: unknown;
   /** Set when the session was started from today's recommendation (§11.8). */
   recommendationId?: string | null;
+  dailyChallengeId?: string | null;
   questionVersionIds: readonly string[];
   now: Date;
 }
@@ -156,6 +159,7 @@ export async function insertSession(tx: Database, input: CreateSessionInput): Pr
     weaknessTier: input.weaknessTier,
     weaknessSnapshotJson: input.weaknessSnapshot,
     recommendationId: input.recommendationId ?? null,
+    dailyChallengeId: input.dailyChallengeId ?? null,
     questionCount: input.questionCount,
     timeLimitMs: input.timeLimitMs,
     creationIdempotencyKey: input.creationIdempotencyKey,
@@ -166,13 +170,14 @@ export async function insertSession(tx: Database, input: CreateSessionInput): Pr
   // Solo sessions have exactly one player row (§14.2).
   await tx.insert(sessionPlayers).values({ sessionId: input.id, userId: input.ownerId });
 
-  await tx.insert(sessionQuestions).values(
-    input.questionVersionIds.map((questionVersionId, position) => ({
-      sessionId: input.id,
-      position,
-      questionVersionId,
-    })),
-  );
+  if (input.questionVersionIds.length)
+    await tx.insert(sessionQuestions).values(
+      input.questionVersionIds.map((questionVersionId, position) => ({
+        sessionId: input.id,
+        position,
+        questionVersionId,
+      })),
+    );
 }
 
 /**
@@ -387,9 +392,12 @@ export async function listCompletedSessions(
       resultJson: gameSessions.resultJson,
     })
     .from(gameSessions)
+    .innerJoin(
+      sessionPlayers,
+      and(eq(sessionPlayers.sessionId, gameSessions.id), eq(sessionPlayers.userId, ownerId)),
+    )
     .where(
       and(
-        eq(gameSessions.ownerId, ownerId),
         eq(gameSessions.status, 'COMPLETED'),
         options.cursor ? lt(gameSessions.id, options.cursor) : undefined,
       ),

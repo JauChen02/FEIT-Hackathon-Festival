@@ -522,3 +522,75 @@ Format and rules: see PLANNING.md Appendix B. Append new ADRs at the bottom; nev
 - Context: §11.5 generates the daily recommendation lazily on the first read of the local date. `/api/me/skills` reports `recommendedCategorySlug` and each category's tier, so it is also a read of that state.
 - Decision: Only `GET /api/me/recommendation` generates. `/api/me/skills` reports a recommendation that already exists and otherwise reports none, staying a pure read.
 - Consequences: A GET that a learner can trigger by opening the Skills page has no side effects. The cost is an ordering constraint on the client: Home fetches the recommendation first and the skills second, because racing them would leave the picker showing ×1.25 on every category on the first visit of a day. That sequencing is commented at the call site.
+
+## ADR-062: Streak continuity and timezone edge cases
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 2
+- Context: The supplied Phase 2 plan identifies ambiguity in protected streak length, westward timezone changes, and crossing seven days via freezes.
+- Decision: Retain the existing DST-safe Intl calendar helpers. A protected streak retains the run ending at its last stored date; a broken streak displays zero. Dates earlier than the last credit are no-ops. Crossing a multiple of seven grants at most one freeze per completion date, after consumption, capped at two held. Non-qualifying sessions use the unchanged read-time streak multiplier. Milestones are recorded in session results. Settings initially covers display name and timezone.
+- Consequences: Historical dates are immutable. A user row lock serializes credit, profile changes and rebuilds, including the first credit when no streak row exists. Completion reads the timezone under this lock. Rebuild and credit share the same pure summary function.
+
+## ADR-063: Explicit test clock for browser journeys
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 2
+- Context: Browser tests cannot reach the in-process injectable session clock.
+- Decision: x-test-clock is honored only when APP_ENV is local/test and E2E_CLOCK_OVERRIDE=1. Playwright enables it for its server. Production and preview always ignore it. Invalid values are ignored.
+- Consequences: Browser tests advance local dates without waiting or a global mutable server clock. The environment guard has an integration test.
+
+## ADR-064: Shared visual system without Stitch access
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: Design pass
+- Context: The user requested implementation of all prompts. Tool discovery found no Google Stitch capability. ADR-022 is already assigned to onboarding semantics.
+- Decision: Establish the shared visual system locally: warm neutral backgrounds, indigo actions, generous rounded cards, consistent navigation, dark theme, visible keyboard focus and reduced-motion support. Keep existing presentation contracts and test selectors. Use this ADR number instead of overwriting ADR-022.
+- Consequences: Subsequent screens use these tokens and primitives. This is an original local design, not an imported Stitch design. No external design service is required to run the app.
+
+## ADR-065: Daily challenge curation and leaderboard fallback
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 4
+- Context: The specification defines a curated daily set without a publication interface before Phase 6. Redis may be unconfigured locally.
+- Decision: Store a fixed ordered set of ten published question versions per date. The initial publisher uses a single category; a local/test fixture command publishes math. A completion grants the fixed bonus independently of session multipliers, once per user/challenge date. Replays receive ordinary session points. Redis uses absolute scores and per-user serialization; a missing, stale or unavailable projection falls back to canonical SQL. Equal points share competition ranks, with username tie order.
+- Consequences: No automatic publication of generated content. Admin publication can reuse the repository. The response identifies database fallback. Upstash is also installed in the database workspace to keep Drizzle's optional peer dependency instance identical across workspaces.
+
+## ADR-066: Versioned activity content and normalized assessments
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 5
+- Context: Scenarios and generators need immutable versions; quiz answers require a question-version FK that generated items and scenario nodes do not have.
+- Decision: Use activity_versions for both scenario graphs and generator configurations, distinguished by an enum. activity_sessions references the version and seed. activity_assessments records served items, responses and outcomes with unique source/position guards. All modes write through learning/recordEvent and use the existing completion transaction, points calculation and ledger. Scenarios disable combo and add 50 for a best ending. Memory uses five sequence-recall rounds by the default versioned template. Sprint items are generated on demand until the server's 60-second deadline.
+- Consequences: No fake question versions or parallel reward path. One content versioning implementation serves both activity kinds. Scenario graphs must be acyclic, with unique nodes and reachable endings. Three scenario fixtures are explicitly DEV_SEED; seed reviewer metadata is not evidence of production human review. Published activity content is protected by a trigger. Memory is an ACTIVE category included in Coach signals; its playable format is memory_match.
+
+## ADR-067: Audited publishing roles and immutable reviewed questions
+
+- Status: Accepted
+- Date: 2026-09-30
+- Phase: 6
+- Context: The content studio needs server-side authorization and a safe edit path for reviewed material.
+- Decision: AUTHOR or ADMIN can create drafts; REVIEWER approves another author's version; ADMIN publishes and archives. A returned draft that has previously entered review is forked before assessment edits. Publishing locks the question and archives its old live version atomically. Every state change writes content audit; every administrative request writes admin audit. Repeated save/transition/fork operations converge on the existing version.
+- Consequences: AI_GENERATED versions follow the same mandatory independent human review. A database trigger also prevents assessment edits to reviewed questions, including direct SQL writes. The studio shows versions, comparison and audit history.
+
+## ADR-068 — Social discovery and portable rate limits
+
+**Status:** Accepted for implementation; public safety policy remains a launch decision.
+
+Use both username requests and single-use, seven-day invite links, as the plan's default. Blocking removes friendship and hides both users on boards. Pair locks serialize crossed requests and block operations; a redeemed-by guard makes invite retries safe. Requests use an exact Redis sliding-window Lua script, compatible with Upstash and the local Redis HTTP bridge. Redis outage fails closed for social/lobby actions and open for solo play.
+
+## ADR-069 — Multiplayer ownership and reconnect credentials
+
+**Status:** Accepted.
+
+One separate Socket.IO instance owns transient rounds. Shared core rules resolve co-op votes and deathmatch damage; one database transaction stores answers, events, match results, streak credit and ledger awards. Results are visible only after commit. Process restart cancels interrupted matches. The signed reconnect credential is bounded to the match's lifetime; the server additionally requires a recorded disconnection no more than 30 seconds ago. This avoids a credential expiring while a player is still connected. Fresh handshake credentials cannot bypass that window. Solo mutation endpoints reject multiplayer sessions. Skills processing serializes and commits updates per user, including multiplayer participants.
+
+## ADR-070 — Narration cannot make numeric or reward claims
+
+**Status:** Accepted.
+
+Anthropic is invoked only by background jobs with an explicitly configured model. Output is structured as two or three sentences and one tip, capped at 400 rendered characters. Generated numerical, rating and reward claims are rejected; numeric facts remain rendered directly from canonical data. Missing configuration, provider errors and validation failure use deterministic templates. Narration and achievements never decide scoring. Event windows are globally non-overlapping, enforced by a Postgres exclusion constraint, and their metadata is retained in scoring breakdowns.

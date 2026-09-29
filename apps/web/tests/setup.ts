@@ -1,3 +1,6 @@
+import { vi } from 'vitest';
+// Quotas are exercised with real Redis in rateLimit.test.ts. Domain fixtures deliberately burst requests.
+vi.mock('@/lib/security/rateLimit', () => ({ rateLimit: async () => {} }));
 /**
  * Loads `.env.local` so integration tests see the same DATABASE_URL and
  * Supabase settings as `pnpm dev`. Individual test files then point

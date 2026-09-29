@@ -39,6 +39,7 @@ export async function runExpireStaleSessions(at: Date = systemClock.now()): Prom
 
   let expired = 0;
   for (const session of stale) {
+    if (session.mode !== 'SOLO') continue;
     const moved = await transitionSession(db(), session.id, session.status, 'EXPIRED', {
       endedAt: at,
     });
@@ -85,7 +86,14 @@ export async function runReconcileSessions(at: Date = systemClock.now()): Promis
 
   for (const session of pending) {
     logger.warn({ session_id: session.id }, 'session.post_processing_missing — re-sending');
-    await sendSessionTerminal(session.id, session.ownerId);
+    const { sessionPlayers } = await import('@learnarena/db');
+    const { eq } = await import('drizzle-orm');
+    const players = await db()
+      .select()
+      .from(sessionPlayers)
+      .where(eq(sessionPlayers.sessionId, session.id));
+    for (const player of players) await sendSessionTerminal(session.id, player.userId);
+    if (!players.length) await sendSessionTerminal(session.id, session.ownerId);
   }
 
   return { resent: pending.length };

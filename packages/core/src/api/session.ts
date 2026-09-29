@@ -1,3 +1,4 @@
+import type { StreakState } from '../streaks';
 /**
  * Session API response shapes (PLANNING.md §16.2).
  *
@@ -73,6 +74,7 @@ export interface SessionResult {
   sessionId: string;
   categorySlug: string;
   finalPoints: number;
+  dailyChallengeBonus?: number;
   pointsBreakdown: PointsBreakdown;
   accuracy: number;
   answeredCount: number;
@@ -82,7 +84,7 @@ export interface SessionResult {
   isQualifying: boolean;
   localDate: string;
   /** Phase 2 fills this in (§12.1). */
-  streak: null;
+  streak: StreakState | null;
   /** True when this completion consumed today's recommendation (§11.5). */
   recommendationCompleted: boolean;
   /** Why `weakness_mult` took the value it did (§10.4, §11.7, §11.8). */

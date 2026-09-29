@@ -1,3 +1,4 @@
+import { restoreCompletedResult } from '@/lib/sessions/completeSession';
 import { z } from 'zod';
 import {
   SOLO_QUESTION_COUNT,
@@ -46,7 +47,11 @@ export const GET = route(
         createdAt: session.createdAt.toISOString(),
         endedAt: session.endedAt?.toISOString() ?? null,
       },
-      result: (session.resultJson as SessionResult | null) ?? null,
+      result:
+        (session.resultJson as SessionResult | null) ??
+        (session.status === 'COMPLETED'
+          ? await db().transaction((tx) => restoreCompletedResult(tx, session))
+          : null),
       skillDeltas,
     };
 

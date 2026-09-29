@@ -1,0 +1,49 @@
+{
+  "slug": "lab-safety",
+  "name": "A safer science lab",
+  "kind": "dialogue_scenario",
+  "versionNumber": 1,
+  "origin": "DEV_SEED",
+  "authorUsername": "seed_author",
+  "reviewerUsername": "seed_reviewer",
+  "content": {
+    "start": "start",
+    "nodes": [
+      {
+        "id": "start",
+        "line": "A classmate spills an unknown liquid. What do you do?",
+        "categorySlug": "science",
+        "choices": [
+          {
+            "id": "step-back",
+            "text": "Step back and notify the supervisor.",
+            "correctness": 1,
+            "feedback": "Good judgment: isolate the hazard and ask a trained person for help.",
+            "nextNodeId": "safe"
+          },
+          {
+            "id": "wipe",
+            "text": "Wipe it up with your sleeve.",
+            "correctness": 0,
+            "feedback": "Unknown chemicals can harm you. Avoid contact and tell the supervisor.",
+            "nextNodeId": "retry"
+          }
+        ]
+      },
+      {
+        "id": "safe",
+        "line": "You made a well-reasoned choice.",
+        "categorySlug": "science",
+        "ending": true,
+        "bestEnding": true
+      },
+      {
+        "id": "retry",
+        "line": "Reflect on the feedback and try the scenario again.",
+        "categorySlug": "science",
+        "ending": true,
+        "bestEnding": false
+      }
+    ]
+  }
+}

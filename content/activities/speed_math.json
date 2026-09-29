@@ -1,0 +1,13 @@
+{
+  "slug": "speed_math",
+  "name": "60-second math sprint",
+  "kind": "speed_math",
+  "versionNumber": 1,
+  "origin": "DEV_SEED",
+  "authorUsername": "seed_author",
+  "reviewerUsername": "seed_reviewer",
+  "content": {
+    "difficulty": 2,
+    "rounds": 5
+  }
+}

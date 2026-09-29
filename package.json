@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "node scripts/run-app.mjs dev",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
@@ -24,7 +24,15 @@
     "db:reset": "pnpm --filter @learnarena/db db:reset",
     "content:import": "pnpm --filter @learnarena/db content:import",
     "supabase": "supabase",
-    "admin:backfill-skills": "pnpm --filter @learnarena/web admin:backfill-skills"
+    "admin:backfill-skills": "pnpm --filter @learnarena/web admin:backfill-skills",
+    "admin:rebuild-streaks": "pnpm --filter @learnarena/web admin:rebuild-streaks",
+    "admin:rebuild-totals": "pnpm --filter @learnarena/web admin:rebuild-totals",
+    "admin:daily-challenge": "pnpm --filter @learnarena/web admin:daily-challenge",
+    "admin:check-consistency": "pnpm --filter @learnarena/web admin:check-consistency",
+    "start": "node scripts/run-app.mjs start",
+    "setup:local": "node scripts/setup-local.mjs",
+    "admin:grant-role": "pnpm --filter @learnarena/web admin:grant-role",
+    "admin:process-skills": "pnpm --filter @learnarena/web admin:process-skills"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",

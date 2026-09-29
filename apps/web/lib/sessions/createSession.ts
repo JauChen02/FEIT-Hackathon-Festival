@@ -13,6 +13,7 @@ import {
 } from '@learnarena/core';
 import {
   findCategoryBySlug,
+  findDailyChallenge,
   findOpenSoloSession,
   findRecommendationById,
   findSessionByIdempotencyKey,
@@ -90,6 +91,20 @@ export async function createSoloSession(input: {
   // §11.6. The session id seeds the tie-break, so it must exist before the
   // questions are chosen.
   const sessionId = uuidv7();
+
+  const challenge = request.dailyChallengeId
+    ? await findDailyChallenge(db(), localDateFor(timezone, now))
+    : null;
+  if (
+    request.dailyChallengeId &&
+    (!challenge ||
+      challenge.id !== request.dailyChallengeId ||
+      challenge.questions.length !== 10 ||
+      challenge.questions.some((q) => q.categoryId !== category.id))
+  )
+    throw new AppError('INVALID_INPUT', {
+      message: 'That daily challenge is not available for this category and date.',
+    });
 
   const candidates = await listLiveCandidates(db(), category.id);
   const exclusionSince = new Date(now.getTime() - RECENT_ANSWER_EXCLUSION_DAYS * 86_400_000);
@@ -183,7 +198,10 @@ export async function createSoloSession(input: {
           })),
         },
         recommendationId: linkedRecommendationId,
-        questionVersionIds: selection.selected.map((item) => item.questionVersionId),
+        dailyChallengeId: challenge?.id ?? null,
+        questionVersionIds: challenge
+          ? challenge.questions.map((q) => q.id)
+          : selection.selected.map((item) => item.questionVersionId),
         now,
       });
 

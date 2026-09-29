@@ -21,7 +21,7 @@ export type EventTransport = (sessionId: string, userId: string) => Promise<void
 
 const inngestTransport: EventTransport = async (sessionId, userId) => {
   await inngest.send({
-    id: sessionTerminalEventId(sessionId),
+    id: sessionTerminalEventId(sessionId, userId),
     name: SESSION_TERMINAL_EVENT,
     data: { sessionId, userId },
   });
@@ -42,6 +42,7 @@ export function setEventTransport(next: EventTransport): () => void {
 }
 
 export async function sendSessionTerminal(sessionId: string, userId: string): Promise<void> {
+  if (process.env.BACKGROUND_JOB_MODE === 'worker') return;
   try {
     await transport(sessionId, userId);
     logger.debug({ session_id: sessionId }, 'session.terminal_event_sent');

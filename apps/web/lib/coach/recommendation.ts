@@ -76,9 +76,12 @@ export async function getOrCreateRecommendation(
     userId: user.id,
     localDate,
     categoryId: category.id,
-    gameTypeId: await gameTypeIdForSlug('quiz_solo'),
+    gameTypeId: await gameTypeIdForSlug(category.slug === 'memory' ? 'memory_match' : 'quiz_solo'),
     targetRating: choice.targetRating,
-    reason: choice.reason,
+    reason: {
+      ...choice.reason,
+      gameTypeSlug: category.slug === 'memory' ? 'memory_match' : 'quiz_solo',
+    },
     now,
   });
 
@@ -113,7 +116,7 @@ export function toRecommendationResponse(
     recommendationId: record.id,
     categorySlug: category?.slug ?? '',
     categoryName: category?.name ?? '',
-    gameTypeSlug: 'quiz_solo',
+    gameTypeSlug: category?.slug === 'memory' ? 'memory_match' : 'quiz_solo',
     status: record.status,
     localDate: record.localDate,
     targetRating: record.targetRating,

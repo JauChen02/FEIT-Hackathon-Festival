@@ -116,10 +116,10 @@ test.describe('the Coach', () => {
     await page.getByTestId('home-skills-link').click();
     await expect(page).toHaveURL(/\/skills$/);
 
-    for (const slug of ['math', 'logic', 'science']) {
+    for (const slug of ['math', 'logic', 'science', 'memory']) {
       await expect(page.getByTestId(`skill-${slug}`)).toBeVisible();
     }
     // ADR-036: deferred categories are seeded but never shown.
-    await expect(page.getByTestId('skill-memory')).toHaveCount(0);
+    await expect(page.getByTestId('skill-language')).toHaveCount(0);
   });
 });

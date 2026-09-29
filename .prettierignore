@@ -6,3 +6,4 @@ coverage/
 packages/db/migrations/
 pnpm-lock.yaml
 PLANNING.md
+PROMPTS.md

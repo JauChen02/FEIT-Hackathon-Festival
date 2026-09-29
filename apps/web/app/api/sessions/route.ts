@@ -1,3 +1,5 @@
+import { rateLimit } from '@/lib/security/rateLimit';
+import { createActivitySession } from '@/lib/games/create';
 import { AppError, createSessionSchema, idempotencyKeySchema } from '@learnarena/core';
 import { requireOnboarded } from '@/lib/auth/guards';
 import { ok, route } from '@/lib/api/handler';
@@ -22,6 +24,7 @@ export const POST = route(
   async ({ request, requestId, body }) => {
     const { user } = await requireOnboarded(request);
 
+    await rateLimit(user.id, 'session');
     // §18.1: session creation is keyed by this header.
     const rawKey = request.headers.get('idempotency-key');
     const parsedKey = idempotencyKeySchema.safeParse(rawKey ?? '');
@@ -32,12 +35,15 @@ export const POST = route(
       });
     }
 
+    if (body.gameType !== 'quiz_solo')
+      return ok(await createActivitySession(user, body, parsedKey.data, now(request)), requestId);
+
     const result = await createSoloSession({
       userId: user.id,
       timezone: user.timezone,
       request: body,
       idempotencyKey: parsedKey.data,
-      now: now(),
+      now: now(request),
     });
 
     return ok(

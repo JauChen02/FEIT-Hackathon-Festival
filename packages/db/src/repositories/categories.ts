@@ -3,7 +3,7 @@
  * "launch categories with live-question counts").
  */
 
-import { and, count, eq } from 'drizzle-orm';
+import { and, count, eq, inArray } from 'drizzle-orm';
 import type { Database } from '../client';
 import { categories, questionVersions } from '../schema/index';
 
@@ -36,7 +36,7 @@ export async function listLaunchCategories(db: Database): Promise<LaunchCategory
       questionVersions,
       and(eq(questionVersions.categoryId, categories.id), eq(questionVersions.status, 'LIVE')),
     )
-    .where(eq(categories.status, 'LAUNCH'))
+    .where(inArray(categories.status, ['LAUNCH', 'ACTIVE']))
     .groupBy(categories.id, categories.slug, categories.name, categories.icon)
     .orderBy(categories.slug);
 

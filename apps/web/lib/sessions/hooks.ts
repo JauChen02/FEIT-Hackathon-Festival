@@ -1,3 +1,5 @@
+import { STREAK_STEP } from '../streaks/credit';
+import type { StreakState } from '@learnarena/core';
 import 'server-only';
 import {
   IMPROVEMENT_BASELINE_SESSIONS,
@@ -22,8 +24,7 @@ import { logger } from '../logger';
  * them in the right order, inside the right transaction, with the arguments
  * they would need. Phase 3 fills in steps 6 and 7.
  *
- * **Step 5 (streak credit) is still a no-op**: Phase 2 owns it (§12.1), and it
- * has not been built. `streak_mult` therefore remains 1.0 in every ledger row.
+ * Step 5 credits streaks; steps 6 and 7 resolve focus and improvement bonuses.
  */
 
 export interface CompletionStepContext {
@@ -43,13 +44,13 @@ export interface CompletionStepContext {
   now: Date;
 }
 
-/** §18.2 step 5 — streak credit. **Phase 2 (§12.1). Not yet implemented.** */
+/** §18.2 step 5 — streak credit. **Phase 2 (§12.1).** */
 export interface StreakStep {
   apply(context: CompletionStepContext): Promise<{
     /** `1 + 0.02 × min(streak_len, 30)` (§10.1). */
     streakMultiplier: number;
-    /** What the results screen shows. Null until Phase 2. */
-    streak: null;
+    /** What the results screen shows. Test adapters may return null. */
+    streak: StreakState | null;
   }>;
 }
 
@@ -80,8 +81,7 @@ export interface CompletionSteps {
 }
 
 /**
- * Phase 2's step. Until streaks exist there is no streak length to multiply
- * by, so the neutral 1.0 is the honest value rather than a placeholder.
+ * Neutral adapter retained for isolated tests of completion steps.
  */
 const NO_OP_STREAK_STEP: StreakStep = {
   apply: async () => ({ streakMultiplier: 1, streak: null }),
@@ -204,7 +204,7 @@ const IMPROVEMENT_STEP: ImprovementStep = {
 
 /** The steps the completion transaction runs in production. */
 export const COMPLETION_STEPS: CompletionSteps = {
-  streak: NO_OP_STREAK_STEP,
+  streak: STREAK_STEP,
   recommendation: RECOMMENDATION_STEP,
   improvement: IMPROVEMENT_STEP,
 };

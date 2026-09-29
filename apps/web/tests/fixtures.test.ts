@@ -130,7 +130,7 @@ describe('fx_weak — lots of logic exposure, low skill', () => {
     // one that is merely being failed, because confidence scales the skill
     // term. So logic is not even a *weak* category here.
     expect(logic.weaknessScore).toBeLessThan(0.4);
-    expect(skills.weaknesses).toEqual(['math', 'science']);
+    expect(skills.weaknesses).toEqual(['math', 'memory', 'science']);
 
     const recommendation = await recommendationFor('fx_weak');
     expect(recommendation.neverPlayed).toBe(true);
@@ -157,7 +157,7 @@ describe('fx_new — never played anything', () => {
   it('scores every category at exactly 0.50', async () => {
     const skills = await skillsFor('fx_new');
 
-    expect(skills.categories).toHaveLength(3);
+    expect(skills.categories).toHaveLength(4);
     for (const category of skills.categories) {
       expect(category.neverPlayed).toBe(true);
       expect(category.rating).toBe(1000);
@@ -171,23 +171,23 @@ describe('fx_new — never played anything', () => {
   it('breaks the three-way tie by slug, so the pick is still deterministic', async () => {
     const recommendation = await recommendationFor('fx_new');
     // All three tie at 0.50; `rankByWeakness` orders ties by slug ascending.
-    expect(['logic', 'math', 'science']).toContain(recommendation.categorySlug);
+    expect(['logic', 'math', 'memory', 'science']).toContain(recommendation.categorySlug);
     expect(recommendation.bonusMultiplier).toBe(1.5);
     expect(recommendation.claimable).toBe(true);
   });
 });
 
 describe('fx_rounded — has played every launch category', () => {
-  it('has real exposure everywhere, so nothing wins on never-played alone', async () => {
+  it('retains real exposure in the original quiz categories', async () => {
     const skills = await skillsFor('fx_rounded');
 
-    for (const category of skills.categories) {
+    for (const category of skills.categories.filter((c) => c.categorySlug !== 'memory')) {
       expect(category.neverPlayed).toBe(false);
       expect(category.lifetimeEventCount).toBe(30);
     }
   });
 
-  it('recommends logic — the weakest category it has actually played', async () => {
+  it('recommends newly available memory while preserving played-category rating order', async () => {
     const skills = await skillsFor('fx_rounded');
     const bySlug = new Map(skills.categories.map((c) => [c.categorySlug, c]));
 
@@ -201,8 +201,9 @@ describe('fx_rounded — has played every launch category', () => {
     expect(bySlug.get('science')!.weaknessScore).toBeGreaterThan(bySlug.get('math')!.weaknessScore);
 
     const recommendation = await recommendationFor('fx_rounded');
-    expect(recommendation.categorySlug).toBe('logic');
-    expect(recommendation.neverPlayed).toBe(false);
+    expect(recommendation.categorySlug).toBe('memory');
+    expect(recommendation.gameTypeSlug).toBe('memory_match');
+    expect(recommendation.neverPlayed).toBe(true);
   });
 
   it('is the fixture that proves the Coach is not just picking unplayed slugs', async () => {
@@ -210,7 +211,9 @@ describe('fx_rounded — has played every launch category', () => {
     // score, which dominates. This one does not, so the choice above is driven
     // entirely by the §11.4 weakness formula.
     const skills = await skillsFor('fx_rounded');
-    expect(skills.categories.every((c) => !c.neverPlayed)).toBe(true);
+    expect(
+      skills.categories.filter((c) => c.categorySlug !== 'memory').every((c) => !c.neverPlayed),
+    ).toBe(true);
     expect(skills.strengths).toEqual(['math', 'science']);
   });
 
@@ -220,9 +223,9 @@ describe('fx_rounded — has played every launch category', () => {
     // Nothing clears the 0.40 weak threshold — logic tops the ranking at 0.34.
     // §11.8 still recommends the weakest, so this is the RECOMMENDED-without-
     // WEAK case, which no other fixture reaches.
-    expect(skills.weaknesses).toEqual([]);
+    expect(skills.weaknesses).toEqual(['memory']);
     const tiers = skills.categories.map((c) => c.tier).sort();
-    expect(tiers).toEqual(['NONE', 'NONE', 'RECOMMENDED']);
+    expect(tiers).toEqual(['NONE', 'NONE', 'NONE', 'RECOMMENDED']);
   });
 });
 

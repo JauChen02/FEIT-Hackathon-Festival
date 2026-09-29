@@ -1,96 +1,70 @@
 # LearnArena
 
-A gamified learning platform: solo quizzes, interactive scenarios, co-op quizzes
-and team "knowledge deathmatch", driven by streaks, multiplicative points,
-social bonuses, weekly leaderboards, and a deterministic Coach that finds each
-learner's weak areas and rewards them for working on those areas.
+A learning game with quizzes, speed math, memory recall, branching scenarios, co-op quizzes and team knowledge deathmatch. Includes streaks and freezes, daily challenges, weekly leaderboards, friends, skill recommendations, achievements, event bonuses, content publishing and privacy controls.
 
-- **[PLANNING.md](PLANNING.md)** — the implementation specification. Single
-  source of truth.
-- **[DECISIONS.md](DECISIONS.md)** — architectural decision records.
+## Run locally
 
-**Current stage: Phases 0, 1 and 3 complete.** Sign-in, onboarding, the full
-MVP schema, the content pipeline and the dev seed (Phase 0); the solo quiz loop,
-the points ledger and the results review (Phase 1); and the deterministic Coach
-— Elo skill ratings, weak-category detection, the daily recommendation, the
-×1.25/×1.5 focus bonuses and the Skills page (Phase 3).
-
-**Phase 2 (Streaks & Freezes) is not built.** The streak multiplier is
-therefore pinned at 1.0 everywhere, and the §3.1 MVP release gate cannot be met
-until it lands.
-
-## Getting started
-
-Prerequisites: Node 22+, pnpm 11+, and **Docker running** (the local Supabase
-stack needs it).
+Requires Node 22+, pnpm 11+ and Docker running.
 
 ```bash
 pnpm install
-pnpm supabase start          # Postgres, Auth and Mailpit on localhost
-cp .env.example .env.local   # then paste in the keys `supabase start` printed
-
-pnpm db:migrate              # apply the checked-in migrations
-pnpm db:seed                 # taxonomy, content users, 45 questions, fixtures
-
-pnpm dev                     # http://localhost:3000
-
-# Optional, in a second terminal: the Inngest dev server, so the background
-# jobs actually run. Without it, `session/terminal` sends fail and are logged —
-# which is the designed behaviour (§23.4: sessions/reconcile retries), but it
-# does mean an error line per completed quiz, and skill ratings never move.
-npx inngest-cli@latest dev -u http://localhost:3000/api/inngest
+pnpm setup:local
+pnpm build
+pnpm start
 ```
 
-If you would rather not run Inngest locally, `pnpm admin:process-skills` applies
-the Coach to every session still waiting for it (ADR-052).
+Open **http://localhost:3000**. Sign in with an email address, open the magic link in **http://127.0.0.1:54324** (local Mailpit), then complete onboarding. Local email is captured, not delivered to your inbox. Google sign-in requires separate provider configuration; use email for the local demo.
 
-Sign in at `/sign-in` with any email address; the local stack captures the
-magic link at <http://127.0.0.1:54324> (Mailpit) instead of sending it.
+`setup:local` starts Supabase and Redis, creates missing `.env.local` settings, applies migrations, seeds playable content and publishes daily challenges for yesterday, today and tomorrow. It preserves existing nonempty environment values. Never commit `.env.local`.
 
-## Layout
+`pnpm start` starts the production web app, the multiplayer server on port 3001 and a background worker. The worker updates skills, coaching, achievements and projections without requiring an Inngest account. For development, use `pnpm dev` instead. Stop with Ctrl+C.
 
+## Demo
+
+1. Complete a quiz from Home; review answers, points and streak credit.
+2. Open Games to try speed math, memory recall and interactive scenarios.
+3. Finish the daily challenge and inspect Skills, Leaderboard and Achievements.
+4. Sign into another account in a private browser window. Add the accounts as friends or share a lobby code. Ready both players to start co-op; deathmatch requires four players, two per team.
+5. Settings contains timezone, reminders, data export and account deletion.
+
+For the content tools, finish onboarding and grant your username a role:
+
+```bash
+pnpm admin:grant-role YOUR_USERNAME ADMIN
 ```
-apps/web/          Next.js App Router — UI, route handlers
-packages/core/     pure domain logic, no I/O: clock, ids, errors, schemas,
-                   time, content hashing, state-transition tables
-packages/db/       Drizzle schema, migrations, repositories, CLI commands
-content/           reviewed question JSON (see content/README.md)
-```
 
-`packages/core` holds everything that must be unit-testable and shared between
-the web app and the future realtime server. It performs no I/O, reads no
-wall-clock time and uses no unseeded randomness (PLANNING.md §29).
+Open `/admin/content`, `/admin/activities`, `/admin/challenges` or `/admin/events`. Publishing reviewed content requires a reviewer distinct from its author; grant another account `REVIEWER` to demonstrate that workflow.
 
-## Commands
+## Operations
 
-| Command               | What it does                                                                 |
-| --------------------- | ---------------------------------------------------------------------------- |
-| `pnpm dev`            | Run the web app                                                              |
-| `pnpm lint`           | ESLint across the workspace                                                  |
-| `pnpm typecheck`      | `tsc --noEmit` in every package                                              |
-| `pnpm test`           | Unit tests (`packages/core`) + integration tests (`packages/db`, `apps/web`) |
-| `pnpm test:e2e`       | Playwright, against a real build and real Supabase Auth                      |
-| `pnpm db:migrate`     | Apply migrations                                                             |
-| `pnpm db:seed`        | Seed taxonomy, content users, questions and fixture users                    |
-| `pnpm db:reset`       | Drop, re-migrate, re-seed (local/test only)                                  |
-| `pnpm content:import` | Publish `content/` — idempotent, refuses edits to published versions         |
+| Command                                 | Purpose                                                  |
+| --------------------------------------- | -------------------------------------------------------- |
+| `pnpm setup:local`                      | Prepare the complete local stack and demo content        |
+| `pnpm dev`                              | Web, realtime and worker with development web server     |
+| `pnpm build`                            | Compile web and check realtime TypeScript                |
+| `pnpm start`                            | Run the built app, realtime and worker                   |
+| `pnpm db:migrate`                       | Apply checked-in migrations                              |
+| `pnpm db:seed`                          | Import demo taxonomy, content and fixture users          |
+| `pnpm admin:daily-challenge YYYY-MM-DD` | Publish a daily challenge from live questions            |
+| `pnpm admin:grant-role USERNAME ROLE`   | Grant ADMIN, AUTHOR or REVIEWER                          |
+| `pnpm admin:process-skills`             | Process outstanding learning events once                 |
+| `pnpm admin:check-consistency`          | Repair derived totals, streaks and missing result caches |
+| `pnpm admin:rebuild-streaks`            | Rebuild streak projections                               |
+| `pnpm admin:rebuild-totals`             | Rebuild point totals from the ledger                     |
 
-Two admin commands, run from `apps/web`:
+## Hosting
 
-| Command                      | What it does                                                        |
-| ---------------------------- | ------------------------------------------------------------------- |
-| `pnpm admin:process-skills`  | Apply the Coach in-process to sessions Inngest has not processed    |
-| `pnpm admin:backfill-skills` | Re-send `session/terminal` for pre-Phase-3 sessions (needs Inngest) |
+See [SUBMISSION.md](SUBMISSION.md) for the submission checklist and service configuration. The repository runs locally; it is not automatically deployed by pushing a branch. A hosted installation needs Postgres/Supabase Auth, Redis, a web process, a persistent Socket.IO process and background processing. `.env.example` lists configuration.
 
-Integration and E2E tests need the Supabase stack running. They create and drop
-their own throwaway databases, so they never touch your development data.
+AI narration is optional: without Anthropic credentials, coaching uses deterministic templates. Push notifications require VAPID settings and browser consent. For hosted Auth, configure allowed redirect URLs and email delivery. Demo seed content is restricted outside production; production content must use the reviewed import/publishing workflow.
 
-## Working on this
+## Project layout
 
-Read PLANNING.md §29 (Agent Operating Instructions) first. In short: implement
-only the current phase, use only the canonical stack in §21.1, keep domain logic
-pure in `packages/core`, and record every non-trivial interpretation in
-DECISIONS.md.
+- `apps/web`: Next.js pages, API, content administration and background jobs.
+- `apps/realtime`: authoritative Socket.IO multiplayer service.
+- `packages/core`: scoring, streaks, game rules and validation without I/O.
+- `packages/db`: Drizzle schema, migrations, repositories and seed commands.
+- `content`: versioned question and activity fixtures.
+- `scripts`: local setup and process orchestration.
 
-Visual design is deliberately minimal — see ADR-021. All design tokens live in
-`apps/web/app/globals.css`; components carry no colours of their own.
+[PLANNING.md](PLANNING.md) describes the specification, [DECISIONS.md](DECISIONS.md) records implementation choices and [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) distinguishes implemented functionality from outstanding release validation.

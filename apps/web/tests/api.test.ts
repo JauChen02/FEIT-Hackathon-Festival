@@ -91,7 +91,11 @@ describe('GET /api/me', () => {
       totalPoints: 0,
     });
     // Phase 1 and 2 fill these in.
-    expect(result.body.streak).toBeNull();
+    expect(result.body.streak).toMatchObject({
+      currentLen: 0,
+      displayState: 'BROKEN',
+      freezesAvailable: 0,
+    });
     expect(result.body.weeklyPoints).toBe(0);
   });
 
@@ -443,9 +447,14 @@ describe('GET /api/categories', () => {
     }>(await getCategories(jsonRequest('/api/categories')));
 
     expect(result.status).toBe(200);
-    expect(result.body.categories.map((c) => c.slug)).toEqual(['logic', 'math', 'science']);
+    expect(result.body.categories.map((c) => c.slug)).toEqual([
+      'logic',
+      'math',
+      'memory',
+      'science',
+    ]);
     for (const category of result.body.categories) {
-      expect(category.liveQuestionCount, category.slug).toBe(15);
+      expect(category.liveQuestionCount, category.slug).toBe(category.slug === 'memory' ? 0 : 15);
     }
   });
 
@@ -462,7 +471,7 @@ describe('GET /api/categories', () => {
     );
 
     const slugs = result.body.categories.map((c) => c.slug);
-    expect(slugs).not.toContain('memory');
+    expect(slugs).toContain('memory');
     expect(slugs).not.toContain('language');
     expect(slugs).not.toContain('history');
   });

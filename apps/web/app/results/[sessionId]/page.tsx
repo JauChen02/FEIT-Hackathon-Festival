@@ -1,7 +1,12 @@
+import { restoreCompletedResult } from '@/lib/sessions/completeSession';
+import { CoachMessage } from '@/components/ui-app/CoachMessage';
+import { StreakCard } from '@/components/ui-app/StreakCard';
+import { MilestoneBanner } from '@/components/ui-app/MilestoneBanner';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import type { SessionResult } from '@learnarena/core';
-import { findSessionById } from '@learnarena/db';
+import { findSessionById, lobbies, lobbyMembers } from '@learnarena/db';
+import { and, eq } from 'drizzle-orm';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MissedQuestionReview } from '@/components/ui-app/MissedQuestionReview';
@@ -29,6 +34,18 @@ export default async function ResultsPage({ params }: { params: Promise<{ sessio
   if (!user) redirect('/sign-in');
 
   const session = await findSessionById(db(), sessionId);
+  if (session && session.mode !== 'SOLO') {
+    const [lobby] = await db()
+      .select({ code: lobbies.code })
+      .from(lobbies)
+      .innerJoin(
+        lobbyMembers,
+        and(eq(lobbyMembers.lobbyId, lobbies.id), eq(lobbyMembers.userId, user.id)),
+      )
+      .where(eq(lobbies.sessionId, session.id));
+    if (lobby) redirect(`/lobbies/${lobby.code}`);
+    redirect('/home');
+  }
   if (!session || session.ownerId !== user.id) redirect('/home');
 
   // Still playable: send the learner back to finish it.
@@ -36,7 +53,11 @@ export default async function ResultsPage({ params }: { params: Promise<{ sessio
     redirect(`/play/${sessionId}`);
   }
 
-  const result = session.resultJson as SessionResult | null;
+  const result =
+    (session.resultJson as SessionResult | null) ??
+    (session.status === 'COMPLETED'
+      ? await db().transaction((tx) => restoreCompletedResult(tx, session))
+      : null);
 
   return (
     <main className="flex min-h-dvh justify-center p-(--spacing-gutter)">
@@ -54,7 +75,15 @@ export default async function ResultsPage({ params }: { params: Promise<{ sessio
               renders. The client polls briefly rather than blocking the
               results behind them (§20 screen 6).
             */}
+            {result.streak ? <StreakCard streak={result.streak} /> : null}
+            {result.streak?.milestone ? <MilestoneBanner days={result.streak.milestone} /> : null}
+            {result.dailyChallengeBonus ? (
+              <p data-testid="daily-bonus" className="rounded-lg bg-accent p-4 font-semibold">
+                Daily challenge complete: +{result.dailyChallengeBonus} bonus points
+              </p>
+            ) : null}
             <SkillDeltasClient sessionId={sessionId} />
+            <CoachMessage sessionId={sessionId} />
 
             <MissedQuestionReview
               review={result.review}

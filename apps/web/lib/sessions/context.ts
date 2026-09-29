@@ -1,3 +1,4 @@
+import { testClockOverride } from '../streaks/testClock';
 import 'server-only';
 import { AppError, systemClock, type Clock } from '@learnarena/core';
 import { findSessionById, type SessionRecord, type UserRecord } from '@learnarena/db';
@@ -34,8 +35,14 @@ export function sessionClock(): Clock {
   return clock;
 }
 
-export function now(): Date {
-  return clock.now();
+export function now(request?: Request): Date {
+  return (
+    testClockOverride(
+      request?.headers.get('x-test-clock') ?? null,
+      process.env.APP_ENV,
+      process.env.E2E_CLOCK_OVERRIDE,
+    ) ?? clock.now()
+  );
 }
 
 export interface SessionContext {
@@ -56,10 +63,10 @@ export async function loadSessionContext(
   sessionId: string,
 ): Promise<SessionContext> {
   const { user } = await requireOnboarded(request);
-  const at = now();
+  const at = now(request);
 
   const found = await findSessionById(db(), sessionId);
-  if (!found || found.ownerId !== user.id) {
+  if (!found || found.ownerId !== user.id || found.mode !== 'SOLO') {
     throw new AppError('SESSION_NOT_FOUND');
   }
 

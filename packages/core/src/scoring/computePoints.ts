@@ -72,7 +72,7 @@ export function computePoints(input: ComputePointsInput): PointsBreakdown {
   let sumCombo = new Decimal(0);
 
   for (const [index, question] of questions.entries()) {
-    const combo = combos[index]!;
+    const combo = input.comboEnabled === false ? 0 : combos[index]!;
     const comboMult = new Decimal(comboMultiplier(combo));
 
     const qBase = new Decimal(100).times(question.correctness).times(question.speedFactor);

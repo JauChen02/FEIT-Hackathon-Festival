@@ -144,7 +144,7 @@ describe('the dev seed (content/)', () => {
 
   it('writes three audit rows per version: IN_REVIEW, APPROVED, LIVE (§13.3)', async () => {
     const [total] = await ctx.db.select({ n: count() }).from(contentAuditLog);
-    expect(total!.n).toBe(45 * 3);
+    expect(total!.n).toBe((45 + 5) * 3);
 
     const version = await ctx.db.query.questionVersions.findFirst();
     const trail = await ctx.db

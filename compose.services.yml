@@ -1,0 +1,15 @@
+services:
+  redis:
+    image: redis:7-alpine
+    command: [redis-server, --appendonly, 'yes']
+    volumes: [learnarena-redis:/data]
+  redis-http:
+    image: hiett/serverless-redis-http:0.0.10
+    ports: ['127.0.0.1:8079:80']
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: learnarena-local-only
+      SRH_CONNECTION_STRING: redis://redis:6379
+    depends_on: [redis]
+volumes:
+  learnarena-redis:
