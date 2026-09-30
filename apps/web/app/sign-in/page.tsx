@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SignInForm } from '@/components/ui-app/SignInForm';
 import type { ApiError } from '@/components/ui-app/StateBoundary';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -14,6 +14,27 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 export default function SignInPage() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [error, setError] = useState<ApiError | null>(null);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const failure =
+      url.searchParams.get('error') ?? new URLSearchParams(url.hash.slice(1)).get('error');
+    if (!failure) return;
+    const messages: Record<string, string> = {
+      auth_failed:
+        'This link could not sign you in. Request a new link, then open it in the same browser and profile where you requested it. Keep using the same address (localhost and 127.0.0.1 are different).',
+      link_expired:
+        'This sign-in link has expired or was already used. Request a fresh link and open the newest email.',
+      missing_code: 'This sign-in link is incomplete. Request a fresh link below.',
+      no_session:
+        'Your login session could not be saved. Allow cookies for this site and request a new link.',
+    };
+    setError({
+      code: 'UNAUTHORIZED',
+      message:
+        messages[failure] ?? 'This sign-in link is invalid or expired. Request a new link below.',
+    });
+  }, []);
 
   const callbackUrl = () => `${window.location.origin}/auth/callback`;
 

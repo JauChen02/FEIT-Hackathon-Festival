@@ -68,3 +68,9 @@ AI narration is optional: without Anthropic credentials, coaching uses determini
 - `scripts`: local setup and process orchestration.
 
 [PLANNING.md](PLANNING.md) describes the specification, [DECISIONS.md](DECISIONS.md) records implementation choices and [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) distinguishes implemented functionality from outstanding release validation.
+
+## Email link returns to sign-in
+
+For a fresh clone, run `pnpm install` and `pnpm setup:local` on that machine, then `pnpm build` and `pnpm start`. Use http://localhost:3000 consistently. Request a new link and open the newest message from that machine’s http://127.0.0.1:54324 Mailpit in the same browser/profile as the sign-in form. Do not reuse a link from another developer’s machine or another browser profile. Keep the app on port 3000 for local Auth’s configured redirect allowlist.
+
+If environment values changed after a production build, rebuild before restarting: public Supabase configuration is embedded in the browser bundle. Callback failures now show an explanation on the sign-in page. Share the error message for troubleshooting, never the full magic link or its token.

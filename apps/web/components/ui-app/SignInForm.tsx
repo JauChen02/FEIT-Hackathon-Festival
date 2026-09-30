@@ -37,7 +37,8 @@ export function SignInForm({ onSendMagicLink, onGoogleSignIn, status, error }: S
 
         {status === 'sent' ? (
           <p role="status" data-testid="magic-link-sent" className="text-sm">
-            Check your inbox — we sent a sign-in link to <strong>{email}</strong>.
+            Check your inbox — we sent a sign-in link to <strong>{email}</strong>. Open the newest
+            link in this same browser and profile.
           </p>
         ) : (
           <form

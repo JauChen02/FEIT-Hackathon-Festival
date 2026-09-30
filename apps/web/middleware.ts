@@ -14,6 +14,11 @@ const PROTECTED_PREFIXES = ['/home', '/onboarding'];
 export async function middleware(request: NextRequest) {
   const { response, userId } = await updateSupabaseSession(request);
   const { pathname } = request.nextUrl;
+  function redirectWithCookies(url: URL) {
+    const redirect = NextResponse.redirect(url);
+    for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
+    return redirect;
+  }
 
   const isProtected = PROTECTED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
@@ -21,11 +26,11 @@ export async function middleware(request: NextRequest) {
 
   if (isProtected && !userId) {
     const signIn = new URL('/sign-in', request.url);
-    return NextResponse.redirect(signIn);
+    return redirectWithCookies(signIn);
   }
 
   if (pathname === '/sign-in' && userId) {
-    return NextResponse.redirect(new URL('/', request.url));
+    return redirectWithCookies(new URL('/', request.url));
   }
 
   return response;
