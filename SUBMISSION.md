@@ -21,7 +21,7 @@ The local setup includes demo content and daily challenges. It does not need pai
 
 ## Push your branch
 
-Changes are left in the working tree on `JauChen`. Review and commit the source and lockfile. `.env.local` is ignored and must stay private. Pushing source does not publish a live site.
+The application source is published on branch `JauChen`. Follow the clone and update instructions in [README.md](README.md). For additional changes, review and commit the source and lockfile before pushing. `.env.local` is ignored and must stay private. Pushing source does not publish a live site.
 
 ## Hosted configuration
 
